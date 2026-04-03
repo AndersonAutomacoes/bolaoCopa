@@ -1,0 +1,23 @@
+spring:
+  application:
+    name: copa
+
+  datasource:
+    url: jdbc:postgresql://localhost:5432/bolaoCopadb
+    username: sampleuser
+    password: samplepass
+    driver-class-name: org.postgresql.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
+
+security:
+  jwt:
+    secret: change-me-please-change-me-please-change-me-please
+    expiration-minutes: 30
+    refresh-expiration-days: 14
+  mfa:
+    issuer: copa
