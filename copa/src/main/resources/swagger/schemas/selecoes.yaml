@@ -1,3 +1,11 @@
+SelecaoUpdateRequest:
+  type: object
+  properties:
+    nome:
+      type: string
+    bandeiraUrl:
+      type: string
+
 SelecaoCreateRequest:
   type: object
   required: [nome, bandeiraUrl]

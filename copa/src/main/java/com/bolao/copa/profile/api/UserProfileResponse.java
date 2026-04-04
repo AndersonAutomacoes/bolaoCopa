@@ -10,6 +10,8 @@ public record UserProfileResponse(
         String sexo,
         String telefone,
         Instant createdAt,
-        Instant updatedAt
+        Instant updatedAt,
+        String planTier,
+        String roles
 ) {
 }

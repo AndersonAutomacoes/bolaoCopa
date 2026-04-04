@@ -1,11 +1,15 @@
 package com.bolao.copa.auth.user;
 
+import com.bolao.copa.plan.PlanTier;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import java.time.Instant;
 import java.util.Collection;
 import java.util.List;
 import org.springframework.security.core.GrantedAuthority;
@@ -29,6 +33,16 @@ public class AppUser implements UserDetails {
     @Column(nullable = false)
     private String roles;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "plan_tier", nullable = false, length = 20)
+    private PlanTier planTier = PlanTier.BRONZE;
+
+    @Column(name = "plan_valid_until")
+    private Instant planValidUntil;
+
+    @Column(name = "plan_source", length = 30)
+    private String planSource = "MANUAL";
+
     @Column(nullable = false)
     private boolean mfaEnabled;
 
@@ -42,6 +56,8 @@ public class AppUser implements UserDetails {
         this.email = email;
         this.password = password;
         this.roles = roles;
+        this.planTier = PlanTier.BRONZE;
+        this.planSource = "MANUAL";
         this.mfaEnabled = false;
     }
 
@@ -80,6 +96,30 @@ public class AppUser implements UserDetails {
 
     public String getRoles() {
         return roles;
+    }
+
+    public PlanTier getPlanTier() {
+        return planTier;
+    }
+
+    public void setPlanTier(PlanTier planTier) {
+        this.planTier = planTier;
+    }
+
+    public Instant getPlanValidUntil() {
+        return planValidUntil;
+    }
+
+    public void setPlanValidUntil(Instant planValidUntil) {
+        this.planValidUntil = planValidUntil;
+    }
+
+    public String getPlanSource() {
+        return planSource;
+    }
+
+    public void setPlanSource(String planSource) {
+        this.planSource = planSource;
     }
 
     @Override

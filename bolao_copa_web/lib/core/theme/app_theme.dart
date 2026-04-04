@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 /// Material 3 com tokens da Direção visual v1 (verde campo + ouro, superfícies claras/escuras).
+///
+/// Tipografia editorial: [GoogleFonts.plusJakartaSans] no [TextTheme] e [PrimaryTextTheme], com pesos e
+/// entrelinhas ajustados em [_editorialTextTheme] (leitura longa e títulos com hierarquia clara).
 abstract final class AppTheme {
   // --- Tokens (uso opcional em widgets) ---
   static const Color primary = Color(0xFF1B7F3A);
@@ -33,10 +36,11 @@ abstract final class AppTheme {
       outline: outlineMuted,
     );
 
+    // Light: sombra M3 muito suave (sem competir com #F1F5F9).
     final cardTheme = CardThemeData(
       elevation: 1,
       surfaceTintColor: Colors.transparent,
-      shadowColor: Colors.black.withValues(alpha: 0.07),
+      shadowColor: Colors.black.withValues(alpha: 0.05),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       color: surfaceCard,
       margin: EdgeInsets.zero,
@@ -104,14 +108,14 @@ abstract final class AppTheme {
         ? ThemeData.dark(useMaterial3: true)
         : ThemeData.light(useMaterial3: true);
     final textTheme = _editorialTextTheme(baseTheme.textTheme, scheme);
-    final primaryTextTheme = GoogleFonts.interTextTheme(baseTheme.primaryTextTheme).apply(
+    final primaryTextTheme = GoogleFonts.plusJakartaSansTextTheme(baseTheme.primaryTextTheme).apply(
       bodyColor: scheme.onPrimary,
       displayColor: scheme.onPrimary,
     );
 
     return ThemeData(
       useMaterial3: true,
-      fontFamily: GoogleFonts.inter().fontFamily,
+      fontFamily: GoogleFonts.plusJakartaSans().fontFamily,
       colorScheme: scheme,
       textTheme: textTheme,
       primaryTextTheme: primaryTextTheme,
@@ -125,7 +129,9 @@ abstract final class AppTheme {
       ),
       cardTheme: cardTheme,
       dividerTheme: DividerThemeData(
-        color: scheme.outline.withValues(alpha: scheme.brightness == Brightness.dark ? 0.45 : 0.65),
+        color: scheme.brightness == Brightness.dark
+            ? scheme.outline.withValues(alpha: 0.45)
+            : outlineMuted.withValues(alpha: 0.72),
         thickness: 1,
         space: 1,
       ),
@@ -140,6 +146,9 @@ abstract final class AppTheme {
         ),
       ),
       navigationBarTheme: NavigationBarThemeData(
+        elevation: 0,
+        shadowColor: Colors.transparent,
+        surfaceTintColor: Colors.transparent,
         indicatorColor: navigationIndicator,
         labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
         backgroundColor: scheme.surface,
@@ -151,9 +160,9 @@ abstract final class AppTheme {
     );
   }
 
-  /// Inter + ajustes finos de peso, entrelinha e tracking para leitura longa e títulos com “peso” editorial.
+  /// Hierarquia M3 com peso e entrelinha para leitura longa (sans editorial).
   static TextTheme _editorialTextTheme(TextTheme base, ColorScheme scheme) {
-    final t = GoogleFonts.interTextTheme(base).apply(
+    final t = GoogleFonts.plusJakartaSansTextTheme(base).apply(
       bodyColor: scheme.onSurface,
       displayColor: scheme.onSurface,
     );

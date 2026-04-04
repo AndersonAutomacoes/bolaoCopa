@@ -1,6 +1,7 @@
 package com.bolao.copa.profile;
 
 import com.bolao.copa.auth.user.AppUser;
+import com.bolao.copa.plan.PlanService;
 import com.bolao.copa.profile.api.UserProfileResponse;
 import com.bolao.copa.profile.api.UserProfileUpdateRequest;
 import org.springframework.http.HttpStatus;
@@ -12,16 +13,18 @@ import org.springframework.web.server.ResponseStatusException;
 public class UserProfileService {
 
     private final UserProfileRepository userProfileRepository;
+    private final PlanService planService;
 
-    public UserProfileService(UserProfileRepository userProfileRepository) {
+    public UserProfileService(UserProfileRepository userProfileRepository, PlanService planService) {
         this.userProfileRepository = userProfileRepository;
+        this.planService = planService;
     }
 
     @Transactional(readOnly = true)
     public UserProfileResponse getMe(AppUser user) {
         UserProfile profile = userProfileRepository.findByUserId(user.getId())
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Profile not found"));
-        return toResponse(user.getEmail(), profile);
+        return buildResponse(user, profile);
     }
 
     @Transactional
@@ -36,19 +39,21 @@ public class UserProfileService {
             profile.setUser(user);
         }
         userProfileRepository.save(profile);
-        return toResponse(user.getEmail(), profile);
+        return buildResponse(user, profile);
     }
 
-    private static UserProfileResponse toResponse(String email, UserProfile profile) {
+    private UserProfileResponse buildResponse(AppUser user, UserProfile profile) {
         return new UserProfileResponse(
                 profile.getUserId(),
-                email,
+                user.getEmail(),
                 profile.getFullName(),
                 profile.getIdade(),
                 profile.getSexo(),
                 profile.getTelefone(),
                 profile.getCreatedAt(),
-                profile.getUpdatedAt()
+                profile.getUpdatedAt(),
+                planService.effectiveTier(user).name(),
+                user.getRoles()
         );
     }
 }

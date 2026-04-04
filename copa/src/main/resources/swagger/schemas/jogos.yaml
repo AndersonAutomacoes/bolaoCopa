@@ -1,3 +1,24 @@
+JogoUpdateRequest:
+  type: object
+  properties:
+    fifaMatchId:
+      type: string
+    fase:
+      type: string
+    rodada:
+      type: string
+    estadio:
+      type: string
+    kickoffAt:
+      type: string
+      format: date-time
+    selecaoCasaId:
+      type: integer
+      format: int64
+    selecaoForaId:
+      type: integer
+      format: int64
+
 JogoCreateRequest:
   type: object
   required: [fase, kickoffAt, selecaoCasaId, selecaoForaId]

@@ -19,9 +19,14 @@ public interface PalpiteRepository extends JpaRepository<Palpite, Long> {
 
     List<Palpite> findByJogo_Id(Long jogoId);
 
+    boolean existsByJogo_Id(Long jogoId);
+
     @Query("SELECT p FROM Palpite p JOIN FETCH p.jogo j JOIN FETCH j.selecaoCasa JOIN FETCH j.selecaoFora WHERE p.user = :user ORDER BY j.kickoffAt ASC")
     List<Palpite> findByUserWithJogos(@Param("user") AppUser user);
 
     @Query("SELECT p FROM Palpite p JOIN FETCH p.jogo j JOIN FETCH j.selecaoCasa JOIN FETCH j.selecaoFora WHERE p.id = :id")
     Optional<Palpite> findByIdWithJogo(@Param("id") Long id);
+
+    @Query("SELECT p FROM Palpite p JOIN FETCH p.jogo j JOIN FETCH j.selecaoCasa JOIN FETCH j.selecaoFora WHERE p.id = :id AND p.user.id = :userId")
+    Optional<Palpite> findByIdAndUserIdWithJogo(@Param("id") Long id, @Param("userId") Long userId);
 }

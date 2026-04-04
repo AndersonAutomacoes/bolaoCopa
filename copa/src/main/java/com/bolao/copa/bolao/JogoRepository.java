@@ -20,4 +20,8 @@ public interface JogoRepository extends JpaRepository<Jogo, Long> {
 
     @Query("SELECT j FROM Jogo j JOIN FETCH j.selecaoCasa JOIN FETCH j.selecaoFora WHERE j.id = :id")
     Optional<Jogo> findByIdWithSelecoes(@Param("id") Long id);
+
+    boolean existsBySelecaoCasaId(Long selecaoCasaId);
+
+    boolean existsBySelecaoForaId(Long selecaoForaId);
 }

@@ -36,6 +36,84 @@ collection:
       "403":
         description: Sem permissão de administrador
 
+item:
+  get:
+    tags: [Jogos]
+    summary: Obter jogo por id
+    operationId: getJogoById
+    security:
+      - bearerAuth: []
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+    responses:
+      "200":
+        description: Jogo encontrado
+        content:
+          application/json:
+            schema:
+              $ref: "../schemas/jogos.yaml#/JogoResponse"
+      "404":
+        description: Não encontrado
+  patch:
+    tags: [Jogos]
+    summary: Atualizar jogo agendado (admin)
+    operationId: updateJogo
+    security:
+      - bearerAuth: []
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: "../schemas/jogos.yaml#/JogoUpdateRequest"
+    responses:
+      "200":
+        description: Atualizado
+        content:
+          application/json:
+            schema:
+              $ref: "../schemas/jogos.yaml#/JogoResponse"
+      "403":
+        description: Sem permissão de administrador
+      "404":
+        description: Jogo não encontrado
+      "409":
+        description: Conflito de status ou dados
+  delete:
+    tags: [Jogos]
+    summary: Excluir jogo agendado sem palpites (admin)
+    operationId: deleteJogo
+    security:
+      - bearerAuth: []
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+    responses:
+      "204":
+        description: Removido
+      "403":
+        description: Sem permissão de administrador
+      "404":
+        description: Jogo não encontrado
+      "409":
+        description: Possui palpites ou status inválido
+
 resultadoOficial:
   patch:
     tags: [Jogos]

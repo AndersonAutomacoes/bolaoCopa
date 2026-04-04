@@ -93,16 +93,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 'Conta e perfil',
                 style: Theme.of(context).textTheme.titleLarge,
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 20),
+              Text('Seus dados', style: Theme.of(context).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w600)),
+              const SizedBox(height: 12),
               TextField(
                 controller: _nome,
                 decoration: const InputDecoration(labelText: 'Nome completo'),
-              ),
-              const SizedBox(height: 12),
-              TextField(
-                controller: _email,
-                keyboardType: TextInputType.emailAddress,
-                decoration: const InputDecoration(labelText: 'E-mail'),
               ),
               const SizedBox(height: 12),
               TextField(
@@ -121,7 +117,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   DropdownMenuItem(value: 'OUTRO', child: Text('Outro')),
                   DropdownMenuItem(
                     value: 'PREFIRO_NAO_INFORMAR',
-                    child: Text('Prefiro nao informar'),
+                    child: Text('Prefiro não informar'),
                   ),
                 ],
                 onChanged: _loading ? null : (v) => setState(() => _sexo = v ?? _sexo),
@@ -131,6 +127,14 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 controller: _telefone,
                 keyboardType: TextInputType.phone,
                 decoration: const InputDecoration(labelText: 'Telefone'),
+              ),
+              const SizedBox(height: 20),
+              Text('Acesso', style: Theme.of(context).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w600)),
+              const SizedBox(height: 12),
+              TextField(
+                controller: _email,
+                keyboardType: TextInputType.emailAddress,
+                decoration: const InputDecoration(labelText: 'E-mail'),
               ),
               const SizedBox(height: 12),
               TextField(
@@ -151,7 +155,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
               ),
               TextButton(
                 onPressed: _loading ? null : () => context.pop(),
-                child: const Text('Ja tenho conta'),
+                child: const Text('Já tenho conta'),
               ),
             ],
           ),

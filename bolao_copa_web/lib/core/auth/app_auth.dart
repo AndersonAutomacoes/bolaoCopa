@@ -8,6 +8,7 @@ import '../api/api_exception.dart';
 import '../api/bolao_api.dart';
 import '../constants/api_constants.dart';
 import '../models/auth_response.dart';
+import 'jwt_payload.dart';
 import 'session_tokens.dart';
 
 /// Sessão JWT com backend Spring (`/api/v1/auth/...`).
@@ -16,9 +17,40 @@ final class AppAuth extends ChangeNotifier {
 
   bool _initialized = false;
   bool _loggedIn = false;
+  /// Plano comercial vindo do JWT (claim `planTier`) ou sincronizado com GET /users/me.
+  String _planTier = 'BRONZE';
 
   bool get initialized => _initialized;
   bool get isLoggedIn => _loggedIn;
+
+  /// Valor normalizado: BRONZE, PRATA ou OURO.
+  String get planTier => _planTier;
+
+  bool get tierPrataOrAbove => _planTier == 'PRATA' || _planTier == 'OURO';
+
+  bool get tierOuro => _planTier == 'OURO';
+
+  void _setPlanTier(String raw) {
+    final t = raw.toUpperCase().trim();
+    final next = t == 'PRATA' || t == 'OURO' || t == 'BRONZE' ? t : 'BRONZE';
+    if (_planTier == next) return;
+    _planTier = next;
+    notifyListeners();
+  }
+
+  /// Após carregar o perfil, alinha o plano exibido nas rotas com o backend (ex.: upgrade manual pelo admin).
+  void syncPlanTierFromProfile(String planTierFromApi) {
+    _setPlanTier(planTierFromApi);
+  }
+
+  void _applyPlanTierFromAccessToken(String? token) {
+    if (token == null || token.isEmpty) {
+      _planTier = 'BRONZE';
+      return;
+    }
+    final claims = decodeJwtPayload(token);
+    _planTier = planTierFromJwtClaims(claims);
+  }
 
   static const accessTokenKey = SessionTokens.accessTokenKey;
   static const refreshTokenKey = SessionTokens.refreshTokenKey;
@@ -26,9 +58,12 @@ final class AppAuth extends ChangeNotifier {
   Future<void> bootstrap() async {
     try {
       final prefs = await SharedPreferences.getInstance();
-      _loggedIn = (prefs.getString(SessionTokens.accessTokenKey) ?? '').isNotEmpty;
+      final token = prefs.getString(SessionTokens.accessTokenKey) ?? '';
+      _loggedIn = token.isNotEmpty;
+      _applyPlanTierFromAccessToken(token);
     } catch (_) {
       _loggedIn = false;
+      _planTier = 'BRONZE';
     } finally {
       _initialized = true;
       notifyListeners();
@@ -71,6 +106,7 @@ final class AppAuth extends ChangeNotifier {
       await prefs.remove(SessionTokens.refreshTokenKey);
     }
     _loggedIn = true;
+    _applyPlanTierFromAccessToken(access);
     notifyListeners();
   }
 
@@ -118,6 +154,7 @@ final class AppAuth extends ChangeNotifier {
     await prefs.remove(SessionTokens.accessTokenKey);
     await prefs.remove(SessionTokens.refreshTokenKey);
     _loggedIn = false;
+    _planTier = 'BRONZE';
     notifyListeners();
   }
 }

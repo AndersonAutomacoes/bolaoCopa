@@ -62,10 +62,10 @@ VALUES
 -- ---------------------------------------------------------------------------
 INSERT INTO selecoes (id, nome, bandeira_url)
 VALUES
-    (9001, 'Seed Albânia', 'https://example.invalid/flags/seed-al'),
-    (9002, 'Seed Bélgica', 'https://example.invalid/flags/seed-be'),
-    (9003, 'Seed Canadá', 'https://example.invalid/flags/seed-ca'),
-    (9004, 'Seed Dinamarca', 'https://example.invalid/flags/seed-dk');
+    (9001, 'Seed Albânia', 'https://flagcdn.com/w40/al.png'),
+    (9002, 'Seed Bélgica', 'https://flagcdn.com/w40/be.png'),
+    (9003, 'Seed Canadá', 'https://flagcdn.com/w40/ca.png'),
+    (9004, 'Seed Dinamarca', 'https://flagcdn.com/w40/dk.png');
 
 -- Jogo 1: finalizado — Seed Albânia (casa) 2 x 1 Seed Bélgica
 INSERT INTO jogos (

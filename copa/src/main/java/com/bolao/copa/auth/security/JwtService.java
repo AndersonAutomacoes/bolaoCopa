@@ -12,6 +12,7 @@ import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 import javax.crypto.SecretKey;
@@ -81,8 +82,12 @@ public class JwtService {
     }
 
     private String buildToken(AppUser user, String type, Instant issuedAt, Instant expiresAt, String tokenId) {
+        Map<String, Object> claims = new HashMap<>();
+        claims.put(CLAIM_TYPE, type);
+        claims.put("roles", user.getRoles());
+        claims.put("planTier", user.getPlanTier() != null ? user.getPlanTier().name() : "BRONZE");
         JwtBuilder builder = Jwts.builder()
-                .claims(Map.of(CLAIM_TYPE, type, "roles", user.getRoles()))
+                .claims(claims)
                 .subject(user.getEmail())
                 .issuedAt(Date.from(issuedAt))
                 .expiration(Date.from(expiresAt));

@@ -28,12 +28,16 @@ paths:
     $ref: "./paths/selecoes.yaml#/item"
   /api/v1/jogos:
     $ref: "./paths/jogos.yaml#/collection"
+  /api/v1/jogos/{id}:
+    $ref: "./paths/jogos.yaml#/item"
   /api/v1/jogos/{id}/resultado-oficial:
     $ref: "./paths/jogos.yaml#/resultadoOficial"
   /api/v1/palpites:
     $ref: "./paths/palpites.yaml#/create"
   /api/v1/palpites/me:
     $ref: "./paths/palpites.yaml#/me"
+  /api/v1/palpites/{id}:
+    $ref: "./paths/palpites.yaml#/updateById"
   /api/v1/ranking:
     $ref: "./paths/ranking.yaml#/collection"
   /api/v1/ranking/me:
@@ -57,16 +61,22 @@ components:
       $ref: "./schemas/users.yaml#/UserProfileResponse"
     SelecaoCreateRequest:
       $ref: "./schemas/selecoes.yaml#/SelecaoCreateRequest"
+    SelecaoUpdateRequest:
+      $ref: "./schemas/selecoes.yaml#/SelecaoUpdateRequest"
     SelecaoResponse:
       $ref: "./schemas/selecoes.yaml#/SelecaoResponse"
     JogoCreateRequest:
       $ref: "./schemas/jogos.yaml#/JogoCreateRequest"
+    JogoUpdateRequest:
+      $ref: "./schemas/jogos.yaml#/JogoUpdateRequest"
     ResultadoOficialRequest:
       $ref: "./schemas/jogos.yaml#/ResultadoOficialRequest"
     JogoResponse:
       $ref: "./schemas/jogos.yaml#/JogoResponse"
     PalpiteCreateRequest:
       $ref: "./schemas/palpites.yaml#/PalpiteCreateRequest"
+    PalpiteUpdateRequest:
+      $ref: "./schemas/palpites.yaml#/PalpiteUpdateRequest"
     PalpiteResponse:
       $ref: "./schemas/palpites.yaml#/PalpiteResponse"
     RankingItemResponse:

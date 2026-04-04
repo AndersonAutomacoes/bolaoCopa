@@ -9,9 +9,11 @@ class BolaoCopaApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp.router(
-      title: 'Bolao Copa 2026',
+      title: 'Bolão Copa 2026',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.light,
+      darkTheme: AppTheme.dark,
+      themeMode: ThemeMode.system,
       routerConfig: AppRouter.config,
     );
   }

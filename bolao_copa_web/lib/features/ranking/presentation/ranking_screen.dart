@@ -1,10 +1,15 @@
 import 'package:flutter/material.dart';
 
-import '../../../core/api/api_exception.dart';
 import '../../../core/api/bolao_api.dart';
+import '../../../core/api/error_message.dart';
 import '../../../core/models/ranking_item_dto.dart';
+import '../../../core/widgets/app_empty_state.dart';
+import '../../../core/widgets/app_error_view.dart';
+import '../../../core/widgets/app_list_skeleton.dart';
+import '../../../core/widgets/ranking_rank_row.dart';
+import '../../../core/widgets/ranking_table_header.dart';
 
-/// GET /api/v1/ranking
+/// Ranking geral (ordenado no servidor).
 class RankingScreen extends StatefulWidget {
   const RankingScreen({super.key});
 
@@ -22,7 +27,9 @@ class _RankingScreenState extends State<RankingScreen> {
   }
 
   void _reload() {
-    setState(() => _future = BolaoApi.fetchRanking());
+    setState(() {
+      _future = BolaoApi.fetchRanking();
+    });
   }
 
   @override
@@ -38,52 +45,43 @@ class _RankingScreenState extends State<RankingScreen> {
         future: _future,
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
+            return const AppListSkeleton.ranking();
           }
           if (snapshot.hasError) {
-            final msg = snapshot.error is ApiException
-                ? (snapshot.error! as ApiException).message
-                : '${snapshot.error}';
-            return Center(
-              child: Padding(
-                padding: const EdgeInsets.all(24),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Text(msg, textAlign: TextAlign.center),
-                    const SizedBox(height: 16),
-                    FilledButton(onPressed: _reload, child: const Text('Tentar de novo')),
-                  ],
-                ),
-              ),
+            return AppErrorView(
+              title: 'Não foi possível carregar o ranking',
+              message: apiErrorMessage(snapshot.error),
+              onPrimary: _reload,
             );
           }
           final list = snapshot.data ?? [];
+          if (list.isEmpty) {
+            return const AppEmptyState(
+              title: 'Ranking ainda vazio',
+              subtitle:
+                  'Quando houver palpites e jogos finalizados, a classificação aparecerá aqui.',
+              icon: Icons.leaderboard_outlined,
+            );
+          }
+          final scheme = Theme.of(context).colorScheme;
           return ListView(
             padding: const EdgeInsets.all(16),
             children: [
               Text(
-                'GET /api/v1/ranking — ordenação no backend (pontos, acertos exatos, primeiro palpite).',
+                'Ordenação: pontos totais; em empate, mais placares exatos; persistindo o empate, quem palpitou primeiro.',
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      color: scheme.onSurfaceVariant,
                     ),
               ),
               const SizedBox(height: 12),
-              if (list.isEmpty)
-                const Padding(
-                  padding: EdgeInsets.all(24),
-                  child: Text('Ranking vazio. Palpites e resultados oficiais atualizam a materialized view.'),
-                )
-              else
-                ...list.map(
-                  (e) => Card(
-                    child: ListTile(
-                      leading: CircleAvatar(child: Text('${e.posicao}')),
-                      title: Text(e.nome?.isNotEmpty == true ? e.nome! : e.email),
-                      subtitle: Text('${e.totalPontos} pts · ${e.totalAcertosExatos} placares exatos'),
-                    ),
-                  ),
+              const RankingTableHeader(),
+              const SizedBox(height: 8),
+              ...list.map(
+                (e) => Padding(
+                  padding: const EdgeInsets.only(bottom: 8),
+                  child: RankingRankRow(item: e),
                 ),
+              ),
             ],
           );
         },

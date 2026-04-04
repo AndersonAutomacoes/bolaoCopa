@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../core/router/app_router.dart';
+import '../../../core/widgets/branding_logo.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -20,16 +21,15 @@ class _SplashScreenState extends State<SplashScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
     return Scaffold(
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.sports_soccer, size: 72, color: scheme.primary),
+            const BrandingLogo(height: 96),
             const SizedBox(height: 24),
             Text(
-              'Bolao Copa 2026',
+              'Bolão Copa 2026',
               style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                     fontWeight: FontWeight.w700,
                   ),

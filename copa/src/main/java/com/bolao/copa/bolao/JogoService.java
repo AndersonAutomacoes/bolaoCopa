@@ -2,6 +2,7 @@ package com.bolao.copa.bolao;
 
 import com.bolao.copa.bolao.api.JogoCreateRequest;
 import com.bolao.copa.bolao.api.JogoResponse;
+import com.bolao.copa.bolao.api.JogoUpdateRequest;
 import com.bolao.copa.bolao.api.ResultadoOficialRequest;
 import jakarta.persistence.EntityManager;
 import java.util.List;
@@ -72,6 +73,64 @@ public class JogoService {
         jogo.setStatus(JogoStatus.SCHEDULED);
         jogoRepository.save(jogo);
         return BolaoMapper.toJogoResponse(jogoRepository.findByIdWithSelecoes(jogo.getId()).orElseThrow());
+    }
+
+    @Transactional
+    public JogoResponse update(Long jogoId, JogoUpdateRequest request) {
+        Jogo jogo = jogoRepository.findByIdWithSelecoes(jogoId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Jogo não encontrado"));
+        if (jogo.getStatus() != JogoStatus.SCHEDULED) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Jogo não pode ser editado neste status");
+        }
+        if (request.fifaMatchId() != null) {
+            String fid = request.fifaMatchId().isBlank() ? null : request.fifaMatchId().trim();
+            if (fid != null) {
+                jogoRepository.findByFifaMatchId(fid).filter(j -> !j.getId().equals(jogoId)).ifPresent(j -> {
+                    throw new ResponseStatusException(HttpStatus.CONFLICT, "fifaMatchId já utilizado");
+                });
+            }
+            jogo.setFifaMatchId(fid);
+        }
+        if (request.fase() != null) {
+            jogo.setFase(request.fase());
+        }
+        if (request.rodada() != null) {
+            jogo.setRodada(request.rodada());
+        }
+        if (request.estadio() != null) {
+            jogo.setEstadio(request.estadio());
+        }
+        if (request.kickoffAt() != null) {
+            jogo.setKickoffAt(request.kickoffAt());
+        }
+        if (request.selecaoCasaId() != null || request.selecaoForaId() != null) {
+            Long casaId = request.selecaoCasaId() != null ? request.selecaoCasaId() : jogo.getSelecaoCasa().getId();
+            Long foraId = request.selecaoForaId() != null ? request.selecaoForaId() : jogo.getSelecaoFora().getId();
+            if (casaId.equals(foraId)) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Seleções casa e fora devem ser diferentes");
+            }
+            Selecao casa = selecaoRepository.findById(casaId)
+                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Seleção casa inválida"));
+            Selecao fora = selecaoRepository.findById(foraId)
+                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Seleção fora inválida"));
+            jogo.setSelecaoCasa(casa);
+            jogo.setSelecaoFora(fora);
+        }
+        jogoRepository.save(jogo);
+        return BolaoMapper.toJogoResponse(jogoRepository.findByIdWithSelecoes(jogoId).orElseThrow());
+    }
+
+    @Transactional
+    public void delete(Long jogoId) {
+        Jogo jogo = jogoRepository.findByIdWithSelecoes(jogoId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Jogo não encontrado"));
+        if (jogo.getStatus() != JogoStatus.SCHEDULED) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Jogo não pode ser excluído neste status");
+        }
+        if (palpiteRepository.existsByJogo_Id(jogoId)) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Jogo possui palpites registrados");
+        }
+        jogoRepository.delete(jogo);
     }
 
     @Transactional

@@ -23,6 +23,38 @@ create:
       "409":
         description: Conflito (palpite duplicado, jogo encerrado ou fora do prazo)
 
+updateById:
+  patch:
+    tags: [Palpites]
+    summary: Atualizar palpite até o horário de início do jogo
+    operationId: updatePalpite
+    security:
+      - bearerAuth: []
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: "../schemas/palpites.yaml#/PalpiteUpdateRequest"
+    responses:
+      "200":
+        description: Palpite atualizado
+        content:
+          application/json:
+            schema:
+              $ref: "../schemas/palpites.yaml#/PalpiteResponse"
+      "404":
+        description: Palpite não encontrado
+      "409":
+        description: Conflito (fora do prazo ou jogo não agendado)
+
 me:
   get:
     tags: [Palpites]

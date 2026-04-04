@@ -59,3 +59,55 @@ item:
               $ref: "../schemas/selecoes.yaml#/SelecaoResponse"
       "404":
         description: Não encontrada
+  patch:
+    tags: [Selecoes]
+    summary: Atualizar seleção (admin)
+    operationId: updateSelecao
+    security:
+      - bearerAuth: []
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: "../schemas/selecoes.yaml#/SelecaoUpdateRequest"
+    responses:
+      "200":
+        description: Atualizada
+        content:
+          application/json:
+            schema:
+              $ref: "../schemas/selecoes.yaml#/SelecaoResponse"
+      "403":
+        description: Sem permissão de administrador
+      "404":
+        description: Não encontrada
+  delete:
+    tags: [Selecoes]
+    summary: Excluir seleção sem referência em jogos (admin)
+    operationId: deleteSelecao
+    security:
+      - bearerAuth: []
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+    responses:
+      "204":
+        description: Removida
+      "403":
+        description: Sem permissão de administrador
+      "404":
+        description: Não encontrada
+      "409":
+        description: Seleção referenciada por jogos

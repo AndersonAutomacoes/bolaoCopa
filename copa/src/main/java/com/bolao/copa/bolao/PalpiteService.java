@@ -3,6 +3,7 @@ package com.bolao.copa.bolao;
 import com.bolao.copa.auth.user.AppUser;
 import com.bolao.copa.bolao.api.PalpiteCreateRequest;
 import com.bolao.copa.bolao.api.PalpiteResponse;
+import com.bolao.copa.bolao.api.PalpiteUpdateRequest;
 import java.time.Instant;
 import java.util.List;
 import org.springframework.http.HttpStatus;
@@ -38,6 +39,25 @@ public class PalpiteService {
         Palpite palpite = new Palpite(user, jogo, request.golsCasaPalpite(), request.golsForaPalpite());
         palpiteRepository.save(palpite);
 
+        Palpite carregado = palpiteRepository.findByIdWithJogo(palpite.getId())
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Falha ao carregar palpite"));
+        return BolaoMapper.toPalpiteResponse(carregado);
+    }
+
+    @Transactional
+    public PalpiteResponse update(AppUser user, Long palpiteId, PalpiteUpdateRequest request) {
+        Palpite palpite = palpiteRepository.findByIdAndUserIdWithJogo(palpiteId, user.getId())
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Palpite não encontrado"));
+        Jogo jogo = palpite.getJogo();
+        if (jogo.getStatus() != JogoStatus.SCHEDULED) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Jogo não aceita alteração de palpite");
+        }
+        if (!Instant.now().isBefore(jogo.getKickoffAt())) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Prazo do palpite encerrado");
+        }
+        palpite.setGolsCasaPalpite(request.golsCasaPalpite());
+        palpite.setGolsForaPalpite(request.golsForaPalpite());
+        palpiteRepository.save(palpite);
         Palpite carregado = palpiteRepository.findByIdWithJogo(palpite.getId())
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Falha ao carregar palpite"));
         return BolaoMapper.toPalpiteResponse(carregado);

@@ -3,10 +3,15 @@ import 'package:go_router/go_router.dart';
 
 import '../../../core/api/api_exception.dart';
 import '../../../core/api/bolao_api.dart';
+import '../../../core/formatting/jogo_status_format.dart';
 import '../../../core/formatting/kickoff_format.dart';
 import '../../../core/models/jogo_dto.dart';
+import '../../../core/models/palpite_dto.dart';
+import '../../../core/widgets/app_detail_skeleton.dart';
+import '../../../core/widgets/app_error_view.dart';
+import '../../../core/widgets/selecao_flag_image.dart';
 
-/// Detalhe do jogo + POST /api/v1/palpites.
+/// Detalhe do jogo e registro do palpite.
 class JogoDetailScreen extends StatefulWidget {
   const JogoDetailScreen({super.key, required this.jogoId, this.initialJogo});
 
@@ -22,6 +27,8 @@ class _JogoDetailScreenState extends State<JogoDetailScreen> {
   bool _loadingJogo = true;
   String? _loadError;
 
+  int? _palpiteId;
+
   final _casa = TextEditingController(text: '0');
   final _fora = TextEditingController(text: '0');
   bool _saving = false;
@@ -34,11 +41,33 @@ class _JogoDetailScreenState extends State<JogoDetailScreen> {
     if (initial != null && initial.id == id) {
       _jogo = initial;
       _loadingJogo = false;
+      _loadPalpiteParaJogo(initial.id);
     } else if (id != null) {
       _fetchJogo(id);
     } else {
       _loadError = 'ID de jogo inválido';
       _loadingJogo = false;
+    }
+  }
+
+  Future<void> _loadPalpiteParaJogo(int jogoId) async {
+    try {
+      final palpites = await BolaoApi.fetchMeusPalpites();
+      PalpiteDto? mine;
+      for (final p in palpites) {
+        if (p.jogo.id == jogoId) {
+          mine = p;
+          break;
+        }
+      }
+      if (!mounted) return;
+      setState(() {
+        _palpiteId = mine?.id;
+        _casa.text = '${mine?.golsCasaPalpite ?? 0}';
+        _fora.text = '${mine?.golsForaPalpite ?? 0}';
+      });
+    } catch (_) {
+      // Lista de palpites é opcional para exibir o formulário
     }
   }
 
@@ -48,22 +77,20 @@ class _JogoDetailScreenState extends State<JogoDetailScreen> {
       _loadError = null;
     });
     try {
-      final found = await BolaoApi.fetchJogosAndFind(id);
-      if (found.isEmpty) {
-        setState(() {
-          _jogo = null;
-          _loadError = 'Jogo não encontrado';
-          _loadingJogo = false;
-        });
-        return;
-      }
+      final j = await BolaoApi.fetchJogoById(id);
       setState(() {
-        _jogo = found.first;
+        _jogo = j;
+        _loadingJogo = false;
+      });
+      await _loadPalpiteParaJogo(j.id);
+    } on ApiException catch (e) {
+      setState(() {
+        _loadError = e.statusCode == 404 ? 'Jogo não encontrado' : e.message;
         _loadingJogo = false;
       });
     } catch (e) {
       setState(() {
-        _loadError = e is ApiException ? e.message : '$e';
+        _loadError = '$e';
         _loadingJogo = false;
       });
     }
@@ -74,6 +101,11 @@ class _JogoDetailScreenState extends State<JogoDetailScreen> {
     _casa.dispose();
     _fora.dispose();
     super.dispose();
+  }
+
+  bool _podeEditarPalpite(JogoDto j) {
+    if (j.status != 'SCHEDULED') return false;
+    return DateTime.now().isBefore(j.kickoffAt);
   }
 
   Future<void> _salvarPalpite() async {
@@ -90,11 +122,21 @@ class _JogoDetailScreenState extends State<JogoDetailScreen> {
     final messenger = ScaffoldMessenger.of(context);
     setState(() => _saving = true);
     try {
-      await BolaoApi.createPalpite(jogoId: jogo.id, golsCasa: gc, golsFora: gf);
-      if (!context.mounted) return;
-      messenger.showSnackBar(
-        const SnackBar(content: Text('Palpite registrado na API.')),
-      );
+      final pid = _palpiteId;
+      if (pid != null) {
+        await BolaoApi.updatePalpite(palpiteId: pid, golsCasa: gc, golsFora: gf);
+        if (!context.mounted) return;
+        messenger.showSnackBar(
+          const SnackBar(content: Text('Palpite atualizado.')),
+        );
+      } else {
+        await BolaoApi.createPalpite(jogoId: jogo.id, golsCasa: gc, golsFora: gf);
+        if (!context.mounted) return;
+        messenger.showSnackBar(
+          const SnackBar(content: Text('Palpite registrado.')),
+        );
+        await _loadPalpiteParaJogo(jogo.id);
+      }
     } on ApiException catch (e) {
       if (!context.mounted) return;
       messenger.showSnackBar(SnackBar(content: Text(e.message)));
@@ -117,9 +159,9 @@ class _JogoDetailScreenState extends State<JogoDetailScreen> {
             icon: const Icon(Icons.arrow_back),
             onPressed: () => context.go('/jogos'),
           ),
-          title: const Text('Jogo'),
+          title: const Text('Carregando…'),
         ),
-        body: const Center(child: CircularProgressIndicator()),
+        body: const AppDetailSkeleton(),
       );
     }
     if (_loadError != null || _jogo == null) {
@@ -131,27 +173,19 @@ class _JogoDetailScreenState extends State<JogoDetailScreen> {
           ),
           title: const Text('Jogo'),
         ),
-        body: Center(
-          child: Padding(
-            padding: const EdgeInsets.all(24),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text(_loadError ?? 'Jogo não encontrado', textAlign: TextAlign.center),
-                const SizedBox(height: 16),
-                FilledButton(
-                  onPressed: () => context.go('/jogos'),
-                  child: const Text('Voltar para jogos'),
-                ),
-              ],
-            ),
-          ),
+        body: AppErrorView(
+          title: 'Não foi possível abrir o jogo',
+          message: _loadError ?? 'Jogo não encontrado',
+          icon: Icons.sports_soccer_outlined,
+          iconColor: Theme.of(context).colorScheme.onSurfaceVariant,
+          primaryLabel: 'Voltar para jogos',
+          onPrimary: () => context.go('/jogos'),
         ),
       );
     }
 
     final j = _jogo!;
-    final podePalpitar = j.status == 'SCHEDULED';
+    final podePalpitar = _podeEditarPalpite(j);
 
     return Scaffold(
       appBar: AppBar(
@@ -159,7 +193,11 @@ class _JogoDetailScreenState extends State<JogoDetailScreen> {
           icon: const Icon(Icons.arrow_back),
           onPressed: () => context.go('/jogos'),
         ),
-        title: Text('Jogo #${j.id}'),
+        title: Text(
+          j.titulo,
+          maxLines: 2,
+          overflow: TextOverflow.ellipsis,
+        ),
       ),
       body: Center(
         child: ConstrainedBox(
@@ -167,6 +205,41 @@ class _JogoDetailScreenState extends State<JogoDetailScreen> {
           child: ListView(
             padding: const EdgeInsets.all(20),
             children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Column(
+                    children: [
+                      SelecaoFlagImage(bandeiraUrl: j.selecaoCasa.bandeiraUrl, width: 56, height: 40),
+                      const SizedBox(height: 6),
+                      Text(
+                        j.selecaoCasa.nome,
+                        textAlign: TextAlign.center,
+                        style: Theme.of(context).textTheme.labelLarge,
+                      ),
+                    ],
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    child: Text(
+                      'x',
+                      style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w700),
+                    ),
+                  ),
+                  Column(
+                    children: [
+                      SelecaoFlagImage(bandeiraUrl: j.selecaoFora.bandeiraUrl, width: 56, height: 40),
+                      const SizedBox(height: 6),
+                      Text(
+                        j.selecaoFora.nome,
+                        textAlign: TextAlign.center,
+                        style: Theme.of(context).textTheme.labelLarge,
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
               Text(
                 j.titulo,
                 textAlign: TextAlign.center,
@@ -176,7 +249,7 @@ class _JogoDetailScreenState extends State<JogoDetailScreen> {
               ),
               const SizedBox(height: 8),
               Text(
-                '${j.fase} · ${formatKickoff(j.kickoffAt)} · ${j.status}',
+                '${j.fase} · ${formatKickoff(j.kickoffAt)} · ${formatJogoStatus(j.status)}',
                 textAlign: TextAlign.center,
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                       color: Theme.of(context).colorScheme.onSurfaceVariant,
@@ -196,7 +269,7 @@ class _JogoDetailScreenState extends State<JogoDetailScreen> {
                 Padding(
                   padding: const EdgeInsets.only(top: 8),
                   child: Text(
-                    'Este jogo não aceita novos palpites (status ${j.status}).',
+                    'Não é possível alterar o palpite após o horário de início ou quando a partida não estiver agendada.',
                     style: TextStyle(color: Theme.of(context).colorScheme.error),
                   ),
                 ),
@@ -235,7 +308,11 @@ class _JogoDetailScreenState extends State<JogoDetailScreen> {
                         child: CircularProgressIndicator(strokeWidth: 2),
                       )
                     : const Icon(Icons.save_outlined),
-                label: Text(_saving ? 'Salvando…' : 'Salvar palpite'),
+                label: Text(
+                  _saving
+                      ? 'Salvando…'
+                      : (_palpiteId != null ? 'Atualizar palpite' : 'Salvar palpite'),
+                ),
               ),
               const SizedBox(height: 12),
               OutlinedButton(

@@ -38,3 +38,9 @@ UserProfileResponse:
     updatedAt:
       type: string
       format: date-time
+    planTier:
+      type: string
+      enum: [BRONZE, PRATA, OURO]
+    roles:
+      type: string
+      description: Ex. ROLE_USER ou ROLE_ADMIN

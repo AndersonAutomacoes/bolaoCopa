@@ -1,3 +1,14 @@
+PalpiteUpdateRequest:
+  type: object
+  required: [golsCasaPalpite, golsForaPalpite]
+  properties:
+    golsCasaPalpite:
+      type: integer
+      minimum: 0
+    golsForaPalpite:
+      type: integer
+      minimum: 0
+
 PalpiteCreateRequest:
   type: object
   required: [jogoId, golsCasaPalpite, golsForaPalpite]

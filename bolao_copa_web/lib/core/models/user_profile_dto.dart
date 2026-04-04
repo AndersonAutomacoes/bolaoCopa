@@ -8,6 +8,8 @@ final class UserProfileDto {
     required this.telefone,
     this.createdAt,
     this.updatedAt,
+    this.planTier = 'BRONZE',
+    this.roles = 'ROLE_USER',
   });
 
   final int userId;
@@ -18,6 +20,14 @@ final class UserProfileDto {
   final String telefone;
   final DateTime? createdAt;
   final DateTime? updatedAt;
+  final String planTier;
+  final String roles;
+
+  bool get isAdmin => roles.contains('ADMIN');
+
+  bool get isPrataOrAbove => planTier == 'PRATA' || planTier == 'OURO';
+
+  bool get isOuro => planTier == 'OURO';
 
   factory UserProfileDto.fromJson(Map<String, dynamic> json) {
     return UserProfileDto(
@@ -29,6 +39,8 @@ final class UserProfileDto {
       telefone: json['telefone'] as String,
       createdAt: json['createdAt'] != null ? DateTime.tryParse(json['createdAt'] as String) : null,
       updatedAt: json['updatedAt'] != null ? DateTime.tryParse(json['updatedAt'] as String) : null,
+      planTier: json['planTier'] as String? ?? 'BRONZE',
+      roles: json['roles'] as String? ?? 'ROLE_USER',
     );
   }
 }

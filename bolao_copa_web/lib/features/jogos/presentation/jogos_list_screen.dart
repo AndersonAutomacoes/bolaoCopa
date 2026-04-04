@@ -1,13 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../core/api/api_exception.dart';
 import '../../../core/api/bolao_api.dart';
+import '../../../core/api/error_message.dart';
+import '../../../core/formatting/jogo_status_format.dart';
 import '../../../core/formatting/kickoff_format.dart';
 import '../../../core/models/jogo_dto.dart';
 import '../../../core/router/app_router.dart';
+import '../../../core/widgets/app_empty_state.dart';
+import '../../../core/widgets/app_error_view.dart';
+import '../../../core/widgets/app_list_skeleton.dart';
+import '../../../core/widgets/selecao_flag_image.dart';
 
-/// Lista de jogos via GET /api/v1/jogos.
+/// Lista de jogos da competição.
 class JogosListScreen extends StatefulWidget {
   const JogosListScreen({super.key});
 
@@ -52,39 +57,22 @@ class _JogosListScreenState extends State<JogosListScreen> {
         future: _future,
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
+            return const AppListSkeleton();
           }
           if (snapshot.hasError) {
-            final msg = snapshot.error is ApiException
-                ? (snapshot.error! as ApiException).message
-                : '${snapshot.error}';
-            return Center(
-              child: Padding(
-                padding: const EdgeInsets.all(24),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Text('Erro ao carregar jogos', style: Theme.of(context).textTheme.titleMedium),
-                    const SizedBox(height: 8),
-                    SelectableText(msg, textAlign: TextAlign.center),
-                    const SizedBox(height: 16),
-                    FilledButton(onPressed: _reload, child: const Text('Tentar de novo')),
-                  ],
-                ),
-              ),
+            return AppErrorView(
+              title: 'Erro ao carregar jogos',
+              message: apiErrorMessage(snapshot.error),
+              onPrimary: _reload,
             );
           }
           final list = snapshot.data ?? [];
           if (list.isEmpty) {
-            return Center(
-              child: Padding(
-                padding: const EdgeInsets.all(24),
-                child: Text(
-                  'Nenhum jogo cadastrado. Um administrador pode criar jogos na API (POST /api/v1/jogos).',
-                  textAlign: TextAlign.center,
-                  style: Theme.of(context).textTheme.bodyLarge,
-                ),
-              ),
+            return const AppEmptyState(
+              title: 'Nenhum jogo cadastrado ainda',
+              subtitle:
+                  'Quando um administrador incluir partidas, elas aparecerão nesta lista.',
+              icon: Icons.sports_soccer_outlined,
             );
           }
           return ListView.separated(
@@ -95,13 +83,21 @@ class _JogosListScreenState extends State<JogosListScreen> {
               final j = list[i];
               return Card(
                 child: ListTile(
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  leading: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      SelecaoFlagImage(bandeiraUrl: j.selecaoCasa.bandeiraUrl, width: 36, height: 26),
+                      const SizedBox(width: 8),
+                      SelecaoFlagImage(bandeiraUrl: j.selecaoFora.bandeiraUrl, width: 36, height: 26),
+                    ],
+                  ),
                   title: Text(
                     j.titulo,
                     style: const TextStyle(fontWeight: FontWeight.w700),
                   ),
                   subtitle: Text(
-                    '${j.fase} · ${formatKickoff(j.kickoffAt)} · ${j.status}',
+                    '${j.fase} · ${formatKickoff(j.kickoffAt)} · ${formatJogoStatus(j.status)}',
                   ),
                   trailing: const Icon(Icons.chevron_right),
                   onTap: () => context.push('${AppRoutes.jogos}/${j.id}', extra: j),

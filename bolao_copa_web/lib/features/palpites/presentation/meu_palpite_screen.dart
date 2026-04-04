@@ -1,12 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../core/api/api_exception.dart';
 import '../../../core/api/bolao_api.dart';
+import '../../../core/api/error_message.dart';
+import '../../../core/formatting/jogo_status_format.dart';
 import '../../../core/formatting/kickoff_format.dart';
 import '../../../core/models/palpite_dto.dart';
+import '../../../core/router/app_router.dart';
+import '../../../core/widgets/app_empty_state.dart';
+import '../../../core/widgets/app_error_view.dart';
+import '../../../core/widgets/app_list_skeleton.dart';
 
-/// GET /api/v1/palpites/me
+/// Lista consolidada dos palpites do usuário.
 class MeuPalpiteScreen extends StatefulWidget {
   const MeuPalpiteScreen({super.key});
 
@@ -24,7 +29,9 @@ class _MeuPalpiteScreenState extends State<MeuPalpiteScreen> {
   }
 
   void _reload() {
-    setState(() => _future = BolaoApi.fetchMeusPalpites());
+    setState(() {
+      _future = BolaoApi.fetchMeusPalpites();
+    });
   }
 
   @override
@@ -44,33 +51,23 @@ class _MeuPalpiteScreenState extends State<MeuPalpiteScreen> {
         future: _future,
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
+            return const AppListSkeleton();
           }
           if (snapshot.hasError) {
-            final msg = snapshot.error is ApiException
-                ? (snapshot.error! as ApiException).message
-                : '${snapshot.error}';
-            return Center(
-              child: Padding(
-                padding: const EdgeInsets.all(24),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Text(msg, textAlign: TextAlign.center),
-                    const SizedBox(height: 16),
-                    FilledButton(onPressed: _reload, child: const Text('Tentar de novo')),
-                  ],
-                ),
-              ),
+            return AppErrorView(
+              title: 'Não foi possível carregar seus palpites',
+              message: apiErrorMessage(snapshot.error),
+              onPrimary: _reload,
             );
           }
           final list = snapshot.data ?? [];
           if (list.isEmpty) {
-            return const Center(
-              child: Padding(
-                padding: EdgeInsets.all(24),
-                child: Text('Você ainda não tem palpites registrados.'),
-              ),
+            return AppEmptyState(
+              title: 'Você ainda não tem palpites registrados',
+              subtitle: 'Abra a lista de jogos e envie seus palpites antes do apito inicial.',
+              icon: Icons.edit_note_outlined,
+              actionLabel: 'Ver jogos e palpitar',
+              onAction: () => context.go(AppRoutes.jogos),
             );
           }
           return ListView.separated(
@@ -84,9 +81,10 @@ class _MeuPalpiteScreenState extends State<MeuPalpiteScreen> {
                 child: ListTile(
                   title: Text(j.titulo),
                   subtitle: Text(
-                    'Palpite: ${p.golsCasaPalpite} x ${p.golsForaPalpite} · ${j.status} · ${formatKickoff(j.kickoffAt)}',
+                    'Palpite: ${p.golsCasaPalpite} x ${p.golsForaPalpite} · ${formatJogoStatus(j.status)} · ${formatKickoff(j.kickoffAt)}',
                   ),
-                  trailing: const Icon(Icons.sports_soccer),
+                  trailing: const Icon(Icons.chevron_right),
+                  onTap: () => context.push('${AppRoutes.jogos}/${j.id}', extra: j),
                 ),
               );
             },
