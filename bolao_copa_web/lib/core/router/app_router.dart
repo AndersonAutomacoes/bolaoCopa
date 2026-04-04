@@ -22,6 +22,29 @@ import '../models/jogo_dto.dart';
 import '../auth/app_auth.dart';
 import 'router_error_screen.dart';
 
+/// Igual ao contentor `indexedStack` do go_router, mas força cada ramo a preencher o viewport.
+/// No Web, sem isto o [Offstage] + [Navigator] pode deixar hit-test com “no size” e rebentar o [MouseTracker].
+Widget _shellIndexedStackWithExpandedBranches(
+  BuildContext context,
+  StatefulNavigationShell navigationShell,
+  List<Widget> children,
+) {
+  return IndexedStack(
+    index: navigationShell.currentIndex,
+    sizing: StackFit.expand,
+    children: List<Widget>.generate(children.length, (int i) {
+      final active = navigationShell.currentIndex == i;
+      return Offstage(
+        offstage: !active,
+        child: TickerMode(
+          enabled: active,
+          child: SizedBox.expand(child: children[i]),
+        ),
+      );
+    }),
+  );
+}
+
 /// Fluxo principal da webapp:
 ///
 /// 1. [SplashScreen] — verifica sessão (token).
@@ -94,10 +117,11 @@ abstract final class AppRouter {
         name: AppRoutes.registerName,
         builder: (context, state) => const RegisterScreen(),
       ),
-      StatefulShellRoute.indexedStack(
+      StatefulShellRoute(
         builder: (context, state, navigationShell) {
           return MainScaffold(navigationShell: navigationShell);
         },
+        navigatorContainerBuilder: _shellIndexedStackWithExpandedBranches,
         branches: [
           StatefulShellBranch(
             routes: [

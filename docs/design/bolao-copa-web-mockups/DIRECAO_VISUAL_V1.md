@@ -1,6 +1,6 @@
 # Direção visual v1 — Bolão Copa 2026 (bolao_copa_web)
 
-**PNG gerados:** mesma pasta que este ficheiro — [`docs/design/bolao-copa-web-mockups/`](.) (24 ficheiros: `mockup_01`…`mockup_16`, `state_*`, `mockup_dark_*`). Cópias espelhadas podem existir em `.cursor/projects/.../assets/` no ambiente Cursor.
+**PNG de referência (versionados no repo):** coloque os ficheiros em [`reference/png/`](reference/png/) — ver [README.md](README.md) e lista abaixo (24 ficheiros: `mockup_01`…`mockup_16`, `state_*`, `mockup_dark_*`). Cópias espelhadas podem existir em `.cursor/projects/.../assets/` no ambiente Cursor.
 
 Consolidação de **três direções criativas** (equivalente a três análises com o subagente `layout-ui-visual-especialista`), fundidas num único sistema visual para implementação em Flutter (Material 3).
 

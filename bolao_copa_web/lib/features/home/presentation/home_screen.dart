@@ -9,10 +9,10 @@ class HomeScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
     return ListenableBuilder(
       listenable: AppRouter.auth,
       builder: (context, _) {
+        final scheme = Theme.of(context).colorScheme;
         final auth = AppRouter.auth;
         return Scaffold(
           appBar: AppBar(

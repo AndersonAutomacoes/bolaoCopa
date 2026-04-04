@@ -54,38 +54,43 @@ class MainScaffold extends StatelessWidget {
             NavigationRail(
               extended: true,
               minExtendedWidth: 280,
+              // Largura finita: o slot leading do NavigationRail pode dar maxWidth infinito;
+              // Row + Flexible/Expanded rebenta com "unbounded width".
               leading: Padding(
                 padding: const EdgeInsets.fromLTRB(8, 12, 8, 20),
-                child: Material(
-                  type: MaterialType.transparency,
-                  child: InkWell(
-                    borderRadius: BorderRadius.circular(12),
-                    onTap: () => context.go(AppRoutes.inicio),
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-                      child: Row(
-                        children: [
-                          const BrandingLogo(height: 40),
-                          const SizedBox(width: 10),
-                          Flexible(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Text(
-                                  'Bolão',
-                                  style: textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700),
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                                Text(
-                                  'Copa 2026',
-                                  style: textTheme.labelSmall?.copyWith(color: scheme.onSurfaceVariant),
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                              ],
+                child: SizedBox(
+                  width: 264,
+                  child: Material(
+                    type: MaterialType.transparency,
+                    child: InkWell(
+                      borderRadius: BorderRadius.circular(12),
+                      onTap: () => context.go(AppRoutes.inicio),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+                        child: Row(
+                          children: [
+                            const BrandingLogo(height: 40),
+                            const SizedBox(width: 10),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Text(
+                                    'Bolão',
+                                    style: textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700),
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                  Text(
+                                    'Copa 2026',
+                                    style: textTheme.labelSmall?.copyWith(color: scheme.onSurfaceVariant),
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ],
+                              ),
                             ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
                     ),
                   ),
@@ -117,24 +122,24 @@ class MainScaffold extends StatelessWidget {
               ],
             ),
             const VerticalDivider(width: 1),
-            Expanded(
-              child: SizedBox.expand(
-                child: navigationShell,
-              ),
-            ),
+            Expanded(child: navigationShell),
           ],
         ),
       );
     }
 
+    final scheme = Theme.of(context).colorScheme;
     return Scaffold(
-      body: SizedBox.expand(
-        child: navigationShell,
-      ),
-      bottomNavigationBar: NavigationBar(
-        selectedIndex: navigationShell.currentIndex,
-        onDestinationSelected: _onDestinationSelected,
-        destinations: _destinations,
+      body: navigationShell,
+      bottomNavigationBar: Material(
+        color: scheme.surface,
+        elevation: 0,
+        surfaceTintColor: Colors.transparent,
+        child: NavigationBar(
+          selectedIndex: navigationShell.currentIndex,
+          onDestinationSelected: _onDestinationSelected,
+          destinations: _destinations,
+        ),
       ),
     );
   }
