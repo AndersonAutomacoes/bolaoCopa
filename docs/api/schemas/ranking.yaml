@@ -1,0 +1,10 @@
+RankingItemResponse:
+  type: object
+  properties:
+    posicao: { type: integer }
+    userId: { type: integer, format: int64 }
+    nome: { type: string }
+    email: { type: string, format: email }
+    totalPontos: { type: integer }
+    totalAcertosExatos: { type: integer }
+    primeiroPalpiteEm: { type: string, format: date-time }

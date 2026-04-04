@@ -1,0 +1,35 @@
+JogoCreateRequest:
+  type: object
+  required: [fase, kickoffAt, selecaoCasaId, selecaoForaId]
+  properties:
+    fifaMatchId: { type: string }
+    fase: { type: string, example: "GRUPO A" }
+    rodada: { type: string, example: "1" }
+    estadio: { type: string }
+    kickoffAt: { type: string, format: date-time }
+    selecaoCasaId: { type: integer, format: int64 }
+    selecaoForaId: { type: integer, format: int64 }
+
+ResultadoOficialRequest:
+  type: object
+  required: [golsCasa, golsFora]
+  properties:
+    golsCasa: { type: integer, minimum: 0 }
+    golsFora: { type: integer, minimum: 0 }
+
+JogoResponse:
+  type: object
+  properties:
+    id: { type: integer, format: int64 }
+    fifaMatchId: { type: string }
+    fase: { type: string }
+    rodada: { type: string }
+    estadio: { type: string }
+    kickoffAt: { type: string, format: date-time }
+    status: { type: string, enum: [SCHEDULED, IN_PROGRESS, FINISHED] }
+    selecaoCasa:
+      $ref: "../openapi.yaml#/components/schemas/SelecaoResponse"
+    selecaoFora:
+      $ref: "../openapi.yaml#/components/schemas/SelecaoResponse"
+    golsCasa: { type: integer, nullable: true }
+    golsFora: { type: integer, nullable: true }

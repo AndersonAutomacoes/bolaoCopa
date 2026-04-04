@@ -1,0 +1,54 @@
+flowchart LR
+  %% ERD de apresentacao com legenda visual (cores)
+
+  subgraph TX["Modelo Transacional (OLTP)"]
+    APP_USERS["APP_USERS"]
+    REFRESH_TOKENS["REFRESH_TOKENS"]
+    USER_PROFILES["USER_PROFILES"]
+    SELECOES["SELECOES"]
+    JOGOS["JOGOS"]
+    PALPITES["PALPITES"]
+    PONTUACOES_PALPITE["PONTUACOES_PALPITE"]
+  end
+
+  subgraph RM["Read Model (OLAP/Consulta)"]
+    V_RANKING_USUARIOS["V_RANKING_USUARIOS"]
+    MV_RANKING_USUARIOS["MV_RANKING_USUARIOS"]
+  end
+
+  %% Relacoes principais (visao de apresentacao)
+  APP_USERS --> REFRESH_TOKENS
+  APP_USERS --> USER_PROFILES
+  APP_USERS --> PALPITES
+  SELECOES --> JOGOS
+  JOGOS --> PALPITES
+  PALPITES --> PONTUACOES_PALPITE
+
+  APP_USERS -. projeta .-> V_RANKING_USUARIOS
+  PALPITES -. agrega .-> V_RANKING_USUARIOS
+  PONTUACOES_PALPITE -. agrega .-> V_RANKING_USUARIOS
+
+  APP_USERS -. projeta .-> MV_RANKING_USUARIOS
+  PALPITES -. agrega .-> MV_RANKING_USUARIOS
+  PONTUACOES_PALPITE -. agrega .-> MV_RANKING_USUARIOS
+
+  %% Legenda visual
+  subgraph LEG["Legenda"]
+    LTX["Tabela transacional"]
+    LRM["Entidade derivada (read model)"]
+    LREL["Relacao transacional"]
+    LDRV["Derivacao/agregacao para ranking"]
+    LREL --- LDRV
+  end
+
+  %% Cores
+  classDef tx fill:#E8F1FF,stroke:#2563EB,stroke-width:1px,color:#0F172A;
+  classDef rm fill:#FFF4E5,stroke:#D97706,stroke-width:1.2px,color:#111827;
+  classDef lg fill:#F8FAFC,stroke:#64748B,stroke-width:1px,color:#0F172A;
+
+  class APP_USERS,REFRESH_TOKENS,USER_PROFILES,SELECOES,JOGOS,PALPITES,PONTUACOES_PALPITE,LTX tx;
+  class V_RANKING_USUARIOS,MV_RANKING_USUARIOS,LRM rm;
+  class LREL,LDRV lg;
+
+  linkStyle 0,1,2,3,4,5 stroke:#2563EB,stroke-width:1.4px;
+  linkStyle 6,7,8,9,10,11 stroke:#D97706,stroke-width:1.6px,stroke-dasharray: 5 4;

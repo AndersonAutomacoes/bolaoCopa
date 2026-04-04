@@ -1,0 +1,87 @@
+erDiagram
+    APP_USERS {
+        BIGINT id PK
+        VARCHAR email UK
+        VARCHAR password
+        VARCHAR roles
+        BOOLEAN mfa_enabled
+        VARCHAR totp_secret
+    }
+
+    REFRESH_TOKENS {
+        BIGINT id PK
+        VARCHAR token_id UK
+        VARCHAR family_id
+        VARCHAR parent_token_id
+        BIGINT user_id FK
+        TIMESTAMPTZ created_at
+        TIMESTAMPTZ expires_at
+        TIMESTAMPTZ last_used_at
+        VARCHAR created_by_ip
+        VARCHAR last_used_ip
+        VARCHAR user_agent
+        BOOLEAN revoked
+        VARCHAR replaced_by_token_id
+        VARCHAR revoked_reason
+    }
+
+    USER_PROFILES {
+        BIGINT user_id PK, FK
+        VARCHAR full_name
+        INT idade
+        VARCHAR sexo
+        VARCHAR telefone
+        TIMESTAMPTZ created_at
+        TIMESTAMPTZ updated_at
+    }
+
+    SELECOES {
+        BIGINT id PK
+        VARCHAR nome UK
+        TEXT bandeira_url
+        TIMESTAMPTZ created_at
+    }
+
+    JOGOS {
+        BIGINT id PK
+        VARCHAR fifa_match_id UK
+        VARCHAR fase
+        VARCHAR rodada
+        VARCHAR estadio
+        TIMESTAMPTZ kickoff_at
+        BIGINT selecao_casa_id FK
+        BIGINT selecao_fora_id FK
+        INT gols_casa
+        INT gols_fora
+        VARCHAR status
+        TIMESTAMPTZ created_at
+        TIMESTAMPTZ updated_at
+    }
+
+    PALPITES {
+        BIGINT id PK
+        BIGINT user_id FK
+        BIGINT jogo_id FK
+        INT gols_casa_palpite
+        INT gols_fora_palpite
+        TIMESTAMPTZ created_at
+        TIMESTAMPTZ updated_at
+    }
+
+    PONTUACOES_PALPITE {
+        BIGINT id PK
+        BIGINT palpite_id FK, UK
+        INT pontos
+        BOOLEAN acerto_exato
+        TIMESTAMPTZ processado_em
+    }
+
+    APP_USERS ||--o{ REFRESH_TOKENS : "possui"
+    APP_USERS ||--|| USER_PROFILES : "tem perfil"
+    APP_USERS ||--o{ PALPITES : "faz"
+
+    SELECOES ||--o{ JOGOS : "casa em"
+    SELECOES ||--o{ JOGOS : "fora em"
+
+    JOGOS ||--o{ PALPITES : "recebe"
+    PALPITES ||--|| PONTUACOES_PALPITE : "gera"

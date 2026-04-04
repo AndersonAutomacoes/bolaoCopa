@@ -1,0 +1,24 @@
+PalpiteCreateRequest:
+  type: object
+  required: [jogoId, golsCasaPalpite, golsForaPalpite]
+  properties:
+    jogoId: { type: integer, format: int64 }
+    golsCasaPalpite: { type: integer, minimum: 0 }
+    golsForaPalpite: { type: integer, minimum: 0 }
+
+PalpiteResponse:
+  type: object
+  properties:
+    id: { type: integer, format: int64 }
+    jogoId: { type: integer, format: int64 }
+    userId: { type: integer, format: int64 }
+    golsCasaPalpite: { type: integer }
+    golsForaPalpite: { type: integer }
+    createdAt: { type: string, format: date-time }
+    pontos:
+      type: integer
+      nullable: true
+      description: Null enquanto resultado oficial nao publicado
+    acertoExato:
+      type: boolean
+      nullable: true

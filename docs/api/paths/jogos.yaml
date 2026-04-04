@@ -1,0 +1,67 @@
+collection:
+  get:
+    tags: [Jogos]
+    summary: Lista jogos com filtros
+    parameters:
+      - in: query
+        name: status
+        schema: { type: string, enum: [SCHEDULED, IN_PROGRESS, FINISHED] }
+      - in: query
+        name: rodada
+        schema: { type: string }
+      - in: query
+        name: from
+        schema: { type: string, format: date-time }
+      - in: query
+        name: to
+        schema: { type: string, format: date-time }
+    responses:
+      "200":
+        description: Lista de jogos
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: "../openapi.yaml#/components/schemas/JogoResponse"
+  post:
+    tags: [Jogos]
+    summary: Cadastra jogo
+    security: [{ bearerAuth: [] }]
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: "../openapi.yaml#/components/schemas/JogoCreateRequest"
+    responses:
+      "201":
+        description: Jogo criado
+        content:
+          application/json:
+            schema:
+              $ref: "../openapi.yaml#/components/schemas/JogoResponse"
+
+resultadoOficial:
+  patch:
+    tags: [Jogos]
+    summary: Publica resultado oficial e dispara recalculo
+    security: [{ bearerAuth: [] }]
+    parameters:
+      - in: path
+        name: id
+        required: true
+        schema: { type: integer, format: int64 }
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: "../openapi.yaml#/components/schemas/ResultadoOficialRequest"
+    responses:
+      "200":
+        description: Resultado publicado
+        content:
+          application/json:
+            schema:
+              $ref: "../openapi.yaml#/components/schemas/JogoResponse"

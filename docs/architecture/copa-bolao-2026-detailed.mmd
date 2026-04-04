@@ -1,0 +1,140 @@
+flowchart LR
+  %% =========================
+  %% CLIENTES E EXPERIENCIA
+  %% =========================
+  subgraph CLIENTS[Clientes]
+    U[Usuario Apostador]
+    A[Administrador]
+  end
+
+  subgraph FE[Flutter WebApp]
+    UI[UI/UX Moderna e Intuitiva]
+    AuthState[Gestao de Sessao JWT/Refresh]
+    JogosPage[Modulo Jogos]
+    PalpitesPage[Modulo Palpites]
+    RankingPage[Modulo Ranking]
+    PerfilPage[Modulo Perfil]
+  end
+
+  U --> UI
+  A --> UI
+  UI --> AuthState
+  UI --> JogosPage
+  UI --> PalpitesPage
+  UI --> RankingPage
+  UI --> PerfilPage
+
+  %% =========================
+  %% API GATEWAY / SECURITY
+  %% =========================
+  subgraph API[Spring Boot API - Java 21]
+    SecurityFilter[Security Filter Chain]
+    AuthController[Auth Controller]
+    UserController[User Controller]
+    SelecaoController[Selecao Controller]
+    JogoController[Jogo Controller]
+    PalpiteController[Palpite Controller]
+    RankingController[Ranking Controller]
+  end
+
+  AuthState --> SecurityFilter
+  JogosPage --> SecurityFilter
+  PalpitesPage --> SecurityFilter
+  RankingPage --> SecurityFilter
+  PerfilPage --> SecurityFilter
+
+  SecurityFilter --> AuthController
+  SecurityFilter --> UserController
+  SecurityFilter --> SelecaoController
+  SecurityFilter --> JogoController
+  SecurityFilter --> PalpiteController
+  SecurityFilter --> RankingController
+
+  %% =========================
+  %% CAMADA DE APLICACAO / DOMINIO
+  %% =========================
+  subgraph APP[Camada de Aplicacao e Dominio]
+    AuthService["Auth Service<br/>(CopaApplication existente)"]
+    UserService[User Service]
+    SelecaoService[Selecao Service]
+    JogoService[Jogo Service]
+    PalpiteService[Palpite Service]
+    PontuacaoService[Pontuacao Service]
+    RankingService[Ranking Service]
+    RulesEngine["Rules Engine<br/>vencedor=3 / exato=5 / erro=0"]
+  end
+
+  AuthController --> AuthService
+  UserController --> UserService
+  SelecaoController --> SelecaoService
+  JogoController --> JogoService
+  PalpiteController --> PalpiteService
+  RankingController --> RankingService
+
+  PalpiteService --> PontuacaoService
+  PontuacaoService --> RulesEngine
+  RankingService --> PontuacaoService
+
+  %% =========================
+  %% PERSISTENCIA
+  %% =========================
+  subgraph DATA[PostgreSQL - Supabase MCP]
+    AppUsers[(app_users)]
+    UserProfiles[(user_profiles)]
+    RefreshTokens[(refresh_tokens)]
+    Selecoes[(selecoes)]
+    Jogos[(jogos)]
+    Palpites[(palpites)]
+    Pontuacoes[(pontuacoes_palpite)]
+    RankView[(v_ranking_usuarios)]
+    RankMV[(mv_ranking_usuarios)]
+    RankFn[["refresh_mv_ranking_usuarios()"]]
+  end
+
+  AuthService --> AppUsers
+  AuthService --> RefreshTokens
+  UserService --> AppUsers
+  UserService --> UserProfiles
+  SelecaoService --> Selecoes
+  JogoService --> Jogos
+  PalpiteService --> Palpites
+  PontuacaoService --> Pontuacoes
+  PontuacaoService --> Jogos
+  PontuacaoService --> Palpites
+  RankingService --> RankView
+  RankingService --> RankMV
+  RankingService --> RankFn
+
+  %% =========================
+  %% INTEGRACOES EXTERNAS
+  %% =========================
+  subgraph EXT[Integracoes]
+    FifaFeed[Feed Oficial de Resultados]
+    Scheduler[Job/Scheduler de Atualizacao]
+  end
+
+  FifaFeed --> Scheduler
+  Scheduler --> JogoService
+  JogoService --> PontuacaoService
+  PontuacaoService --> RankingService
+
+  %% =========================
+  %% REGRAS DE NEGOCIO / DESEMPATE
+  %% =========================
+  TieBreak["Desempate Ranking<br/>1 total_pontos DESC<br/>2 total_acertos_exatos DESC<br/>3 primeiro_palpite_em ASC"]
+  RulesEngine --> TieBreak
+  TieBreak --> RankView
+  TieBreak --> RankMV
+
+  %% =========================
+  %% OBSERVABILIDADE (OPCIONAL)
+  %% =========================
+  subgraph OBS[Observabilidade]
+    Logs[Logs Aplicacao]
+    Metrics[Metricas API/DB]
+    Audit[Auditoria de Palpites]
+  end
+
+  AuthService --> Logs
+  PalpiteService --> Audit
+  PontuacaoService --> Metrics

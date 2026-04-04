@@ -1,0 +1,40 @@
+UserProfileUpdateRequest:
+  type: object
+  required: [fullName, idade, sexo, telefone]
+  properties:
+    fullName:
+      type: string
+      maxLength: 150
+    idade:
+      type: integer
+      minimum: 13
+      maximum: 120
+    sexo:
+      type: string
+      maxLength: 20
+    telefone:
+      type: string
+      maxLength: 30
+
+UserProfileResponse:
+  type: object
+  properties:
+    userId:
+      type: integer
+      format: int64
+    email:
+      type: string
+    fullName:
+      type: string
+    idade:
+      type: integer
+    sexo:
+      type: string
+    telefone:
+      type: string
+    createdAt:
+      type: string
+      format: date-time
+    updatedAt:
+      type: string
+      format: date-time

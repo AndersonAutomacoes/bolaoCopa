@@ -1,0 +1,61 @@
+collection:
+  get:
+    tags: [Selecoes]
+    summary: Listar seleções
+    operationId: listSelecoes
+    security:
+      - bearerAuth: []
+    responses:
+      "200":
+        description: Lista ordenada por nome
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: "../schemas/selecoes.yaml#/SelecaoResponse"
+  post:
+    tags: [Selecoes]
+    summary: Cadastrar seleção (admin)
+    operationId: createSelecao
+    security:
+      - bearerAuth: []
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: "../schemas/selecoes.yaml#/SelecaoCreateRequest"
+    responses:
+      "201":
+        description: Seleção criada
+        content:
+          application/json:
+            schema:
+              $ref: "../schemas/selecoes.yaml#/SelecaoResponse"
+      "403":
+        description: Sem permissão de administrador
+
+item:
+  get:
+    tags: [Selecoes]
+    summary: Obter seleção por id
+    operationId: getSelecaoById
+    security:
+      - bearerAuth: []
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+    responses:
+      "200":
+        description: Seleção encontrada
+        content:
+          application/json:
+            schema:
+              $ref: "../schemas/selecoes.yaml#/SelecaoResponse"
+      "404":
+        description: Não encontrada

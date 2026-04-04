@@ -1,0 +1,63 @@
+flowchart LR
+  %% Clientes
+  U[Usuario]
+  Admin[Administrador]
+
+  %% Frontend
+  subgraph FE[Flutter WebApp]
+    UI[UI Moderna e Intuitiva]
+    AuthClient[Cliente de Autenticacao]
+    PalpiteClient[Cliente de Palpites]
+    RankingClient[Cliente de Ranking]
+    JogosClient[Cliente de Jogos]
+  end
+
+  %% Backend
+  subgraph BE[Backend Java 21 - Spring Boot]
+    AuthAPI[Auth API - modulo existente]
+    UserAPI[User API]
+    SelecaoAPI[Selecao API]
+    JogoAPI[Jogo API]
+    PalpiteAPI[Palpite API]
+    RankingAPI[Ranking API]
+    PontuacaoSrv[Pontuacao Service]
+  end
+
+  %% Persistencia
+  subgraph DB[Supabase MCP - PostgreSQL]
+    UserTbl[(usuarios)]
+    SelecaoTbl[(selecoes)]
+    JogoTbl[(jogos_copa_2026)]
+    PalpiteTbl[(palpites)]
+    PontosTbl[(pontuacoes)]
+  end
+
+  %% Fontes externas
+  Source[Feed oficial de resultados FIFA]
+
+  %% Fluxos principais
+  U --> UI
+  Admin --> UI
+
+  UI --> AuthClient --> AuthAPI
+  UI --> JogosClient --> JogoAPI
+  UI --> PalpiteClient --> PalpiteAPI
+  UI --> RankingClient --> RankingAPI
+
+  AuthAPI --> UserTbl
+  UserAPI --> UserTbl
+  SelecaoAPI --> SelecaoTbl
+  JogoAPI --> JogoTbl
+  PalpiteAPI --> PalpiteTbl
+  PontuacaoSrv --> PontosTbl
+  PontuacaoSrv --> JogoTbl
+  PontuacaoSrv --> PalpiteTbl
+  RankingAPI --> PontosTbl
+
+  Source --> JogoAPI
+  JogoAPI --> PontuacaoSrv
+
+  %% Regras de pontuacao
+  Regra[Regras: vencedor = 3, placar exato = 5, erro = 0]
+  PalpiteAPI --> Regra
+  Regra --> PontuacaoSrv

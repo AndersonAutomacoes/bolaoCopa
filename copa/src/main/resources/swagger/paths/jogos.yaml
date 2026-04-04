@@ -1,0 +1,69 @@
+collection:
+  get:
+    tags: [Jogos]
+    summary: Listar jogos
+    operationId: listJogos
+    security:
+      - bearerAuth: []
+    responses:
+      "200":
+        description: Lista ordenada por data de início
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: "../schemas/jogos.yaml#/JogoResponse"
+  post:
+    tags: [Jogos]
+    summary: Cadastrar jogo (admin)
+    operationId: createJogo
+    security:
+      - bearerAuth: []
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: "../schemas/jogos.yaml#/JogoCreateRequest"
+    responses:
+      "201":
+        description: Jogo criado
+        content:
+          application/json:
+            schema:
+              $ref: "../schemas/jogos.yaml#/JogoResponse"
+      "403":
+        description: Sem permissão de administrador
+
+resultadoOficial:
+  patch:
+    tags: [Jogos]
+    summary: Registrar resultado oficial e pontuar palpites (admin)
+    operationId: registrarResultadoOficial
+    security:
+      - bearerAuth: []
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: "../schemas/jogos.yaml#/ResultadoOficialRequest"
+    responses:
+      "200":
+        description: Jogo atualizado e ranking materializado atualizado
+        content:
+          application/json:
+            schema:
+              $ref: "../schemas/jogos.yaml#/JogoResponse"
+      "403":
+        description: Sem permissão de administrador
+      "404":
+        description: Jogo não encontrado

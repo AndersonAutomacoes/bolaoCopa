@@ -4,15 +4,19 @@ spring:
 
   datasource:
     url: jdbc:postgresql://localhost:5432/bolaoCopadb
-    username: sampleuser
-    password: samplepass
+    username: postgres
+    password: 123456
     driver-class-name: org.postgresql.Driver
 
   jpa:
     hibernate:
-      ddl-auto: update
+      ddl-auto: validate
     show-sql: true
     database-platform: org.hibernate.dialect.PostgreSQLDialect
+
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
 
 security:
   jwt:

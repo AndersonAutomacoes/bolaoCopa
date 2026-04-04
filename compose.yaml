@@ -1,0 +1,35 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: bolaoCopadb
+      POSTGRES_USER: sampleuser
+      POSTGRES_PASSWORD: samplepass
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U sampleuser -d bolaoCopadb"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+
+  copa:
+    build:
+      context: ./copa
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8080"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/bolaoCopadb
+      SPRING_DATASOURCE_USERNAME: sampleuser
+      SPRING_DATASOURCE_PASSWORD: samplepass
+      SECURITY_JWT_SECRET: ${JWT_SECRET:-change-me-please-change-me-please-change-me-please}
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+volumes:
+  postgres_data:

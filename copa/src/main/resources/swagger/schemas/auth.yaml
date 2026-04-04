@@ -1,0 +1,33 @@
+RegisterRequest:
+  type: object
+  required: [email, password]
+  properties:
+    email:
+      type: string
+      format: email
+    password:
+      type: string
+      minLength: 8
+      maxLength: 100
+
+LoginRequest:
+  type: object
+  required: [email, password]
+  properties:
+    email:
+      type: string
+      format: email
+    password:
+      type: string
+
+AuthResponse:
+  type: object
+  properties:
+    mfaRequired:
+      type: boolean
+    accessToken:
+      type: [string, "null"]
+    challengeToken:
+      type: [string, "null"]
+    refreshToken:
+      type: [string, "null"]

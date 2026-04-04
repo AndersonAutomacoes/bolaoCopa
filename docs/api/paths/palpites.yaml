@@ -1,0 +1,39 @@
+create:
+  post:
+    tags: [Palpites]
+    summary: Registra palpite para um jogo
+    security: [{ bearerAuth: [] }]
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: "../openapi.yaml#/components/schemas/PalpiteCreateRequest"
+    responses:
+      "201":
+        description: Palpite registrado
+        content:
+          application/json:
+            schema:
+              $ref: "../openapi.yaml#/components/schemas/PalpiteResponse"
+      "409":
+        description: Usuario ja palpitou para este jogo
+
+me:
+  get:
+    tags: [Palpites]
+    summary: Lista palpites do usuario autenticado
+    security: [{ bearerAuth: [] }]
+    parameters:
+      - in: query
+        name: jogoId
+        schema: { type: integer, format: int64 }
+    responses:
+      "200":
+        description: Lista de palpites
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: "../openapi.yaml#/components/schemas/PalpiteResponse"

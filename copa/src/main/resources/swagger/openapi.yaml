@@ -1,0 +1,73 @@
+openapi: 3.1.0
+info:
+  title: Copa Bolao 2026 API
+  version: 0.1.0
+  description: Contrato inicial REST modularizado por paths e schemas.
+servers:
+  - url: http://localhost:8080
+    description: Local
+tags:
+  - name: Auth
+  - name: Users
+  - name: Selecoes
+  - name: Jogos
+  - name: Palpites
+  - name: Ranking
+paths:
+  /api/v1/auth/register:
+    $ref: "./paths/auth.yaml#/register"
+  /api/v1/auth/login:
+    $ref: "./paths/auth.yaml#/login"
+  /api/v1/auth/refresh:
+    $ref: "./paths/auth.yaml#/refresh"
+  /api/v1/users/me:
+    $ref: "./paths/users.yaml#/me"
+  /api/v1/selecoes:
+    $ref: "./paths/selecoes.yaml#/collection"
+  /api/v1/selecoes/{id}:
+    $ref: "./paths/selecoes.yaml#/item"
+  /api/v1/jogos:
+    $ref: "./paths/jogos.yaml#/collection"
+  /api/v1/jogos/{id}/resultado-oficial:
+    $ref: "./paths/jogos.yaml#/resultadoOficial"
+  /api/v1/palpites:
+    $ref: "./paths/palpites.yaml#/create"
+  /api/v1/palpites/me:
+    $ref: "./paths/palpites.yaml#/me"
+  /api/v1/ranking:
+    $ref: "./paths/ranking.yaml#/collection"
+  /api/v1/ranking/me:
+    $ref: "./paths/ranking.yaml#/me"
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    RegisterRequest:
+      $ref: "./schemas/auth.yaml#/RegisterRequest"
+    LoginRequest:
+      $ref: "./schemas/auth.yaml#/LoginRequest"
+    AuthResponse:
+      $ref: "./schemas/auth.yaml#/AuthResponse"
+    UserProfileUpdateRequest:
+      $ref: "./schemas/users.yaml#/UserProfileUpdateRequest"
+    UserProfileResponse:
+      $ref: "./schemas/users.yaml#/UserProfileResponse"
+    SelecaoCreateRequest:
+      $ref: "./schemas/selecoes.yaml#/SelecaoCreateRequest"
+    SelecaoResponse:
+      $ref: "./schemas/selecoes.yaml#/SelecaoResponse"
+    JogoCreateRequest:
+      $ref: "./schemas/jogos.yaml#/JogoCreateRequest"
+    ResultadoOficialRequest:
+      $ref: "./schemas/jogos.yaml#/ResultadoOficialRequest"
+    JogoResponse:
+      $ref: "./schemas/jogos.yaml#/JogoResponse"
+    PalpiteCreateRequest:
+      $ref: "./schemas/palpites.yaml#/PalpiteCreateRequest"
+    PalpiteResponse:
+      $ref: "./schemas/palpites.yaml#/PalpiteResponse"
+    RankingItemResponse:
+      $ref: "./schemas/ranking.yaml#/RankingItemResponse"

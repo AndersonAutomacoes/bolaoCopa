@@ -1,0 +1,17 @@
+UserProfileUpdateRequest:
+  type: object
+  properties:
+    nome: { type: string, minLength: 2, maxLength: 150 }
+    idade: { type: integer, minimum: 13, maximum: 120 }
+    sexo: { type: string, enum: [MASCULINO, FEMININO, OUTRO, PREFIRO_NAO_INFORMAR] }
+    telefone: { type: string, minLength: 8, maxLength: 30 }
+
+UserProfileResponse:
+  type: object
+  properties:
+    userId: { type: integer, format: int64 }
+    nome: { type: string }
+    email: { type: string, format: email }
+    idade: { type: integer }
+    sexo: { type: string }
+    telefone: { type: string }

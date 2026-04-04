@@ -1,0 +1,13 @@
+flowchart TD
+  A[Splash - verifica token] -->|sem sessao| B[Login]
+  A -->|com sessao| C[Shell - Inicio]
+  B --> D[Registrar]
+  D --> B
+  B -->|login ok| C
+  C --> E[Jogos - lista]
+  C --> F[Ranking]
+  C --> G[Perfil]
+  C --> H[Meus palpites - modal rota]
+  E --> I[Detalhe do jogo + palpite]
+  I --> E
+  G -->|sair| B

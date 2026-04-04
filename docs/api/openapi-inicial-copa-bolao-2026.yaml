@@ -1,0 +1,429 @@
+openapi: 3.1.0
+info:
+  title: Copa Bolao 2026 API
+  version: 0.1.0
+  description: Contrato inicial REST para autenticacao, jogos, palpites e ranking.
+servers:
+  - url: http://localhost:8080
+    description: Local
+tags:
+  - name: Auth
+  - name: Users
+  - name: Selecoes
+  - name: Jogos
+  - name: Palpites
+  - name: Ranking
+paths:
+  /api/v1/auth/register:
+    post:
+      tags: [Auth]
+      summary: Cadastra novo usuario
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RegisterRequest"
+      responses:
+        "201":
+          description: Usuario criado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthResponse"
+        "409":
+          description: Email ja cadastrado
+  /api/v1/auth/login:
+    post:
+      tags: [Auth]
+      summary: Autentica usuario
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LoginRequest"
+      responses:
+        "200":
+          description: Login efetuado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthResponse"
+        "401":
+          description: Credenciais invalidas
+  /api/v1/auth/refresh:
+    post:
+      tags: [Auth]
+      summary: Renova access token
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [refreshToken]
+              properties:
+                refreshToken:
+                  type: string
+      responses:
+        "200":
+          description: Token renovado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthResponse"
+        "401":
+          description: Refresh token invalido
+  /api/v1/users/me:
+    get:
+      tags: [Users]
+      summary: Retorna perfil do usuario autenticado
+      security: [{ bearerAuth: [] }]
+      responses:
+        "200":
+          description: Perfil atual
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserProfileResponse"
+    put:
+      tags: [Users]
+      summary: Atualiza perfil do usuario autenticado
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UserProfileUpdateRequest"
+      responses:
+        "200":
+          description: Perfil atualizado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserProfileResponse"
+  /api/v1/selecoes:
+    get:
+      tags: [Selecoes]
+      summary: Lista selecoes
+      responses:
+        "200":
+          description: Lista de selecoes
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/SelecaoResponse"
+    post:
+      tags: [Selecoes]
+      summary: Cadastra selecao
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SelecaoCreateRequest"
+      responses:
+        "201":
+          description: Selecao criada
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SelecaoResponse"
+  /api/v1/selecoes/{id}:
+    put:
+      tags: [Selecoes]
+      summary: Atualiza selecao
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer, format: int64 }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SelecaoCreateRequest"
+      responses:
+        "200":
+          description: Selecao atualizada
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SelecaoResponse"
+  /api/v1/jogos:
+    get:
+      tags: [Jogos]
+      summary: Lista jogos com filtros
+      parameters:
+        - in: query
+          name: status
+          schema: { type: string, enum: [SCHEDULED, IN_PROGRESS, FINISHED] }
+        - in: query
+          name: rodada
+          schema: { type: string }
+        - in: query
+          name: from
+          schema: { type: string, format: date-time }
+        - in: query
+          name: to
+          schema: { type: string, format: date-time }
+      responses:
+        "200":
+          description: Lista de jogos
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/JogoResponse"
+    post:
+      tags: [Jogos]
+      summary: Cadastra jogo
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/JogoCreateRequest"
+      responses:
+        "201":
+          description: Jogo criado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/JogoResponse"
+  /api/v1/jogos/{id}/resultado-oficial:
+    patch:
+      tags: [Jogos]
+      summary: Publica resultado oficial e dispara recalculo
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer, format: int64 }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ResultadoOficialRequest"
+      responses:
+        "200":
+          description: Resultado publicado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/JogoResponse"
+  /api/v1/palpites:
+    post:
+      tags: [Palpites]
+      summary: Registra palpite para um jogo
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PalpiteCreateRequest"
+      responses:
+        "201":
+          description: Palpite registrado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PalpiteResponse"
+        "409":
+          description: Usuario ja palpitou para este jogo
+  /api/v1/palpites/me:
+    get:
+      tags: [Palpites]
+      summary: Lista palpites do usuario autenticado
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - in: query
+          name: jogoId
+          schema: { type: integer, format: int64 }
+      responses:
+        "200":
+          description: Lista de palpites
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/PalpiteResponse"
+  /api/v1/ranking:
+    get:
+      tags: [Ranking]
+      summary: Lista ranking geral
+      parameters:
+        - in: query
+          name: limit
+          schema: { type: integer, default: 50, minimum: 1, maximum: 200 }
+        - in: query
+          name: offset
+          schema: { type: integer, default: 0, minimum: 0 }
+      responses:
+        "200":
+          description: Ranking ordenado por desempate oficial
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/RankingItemResponse"
+                  total:
+                    type: integer
+  /api/v1/ranking/me:
+    get:
+      tags: [Ranking]
+      summary: Retorna posicao do usuario autenticado
+      security: [{ bearerAuth: [] }]
+      responses:
+        "200":
+          description: Posicao no ranking
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RankingItemResponse"
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    RegisterRequest:
+      type: object
+      required: [nome, email, idade, sexo, telefone, password]
+      properties:
+        nome: { type: string, minLength: 2, maxLength: 150 }
+        email: { type: string, format: email }
+        idade: { type: integer, minimum: 13, maximum: 120 }
+        sexo: { type: string, enum: [MASCULINO, FEMININO, OUTRO, PREFIRO_NAO_INFORMAR] }
+        telefone: { type: string, minLength: 8, maxLength: 30 }
+        password: { type: string, minLength: 8, maxLength: 255 }
+    LoginRequest:
+      type: object
+      required: [email, password]
+      properties:
+        email: { type: string, format: email }
+        password: { type: string }
+        mfaCode:
+          type: string
+          description: Obrigatorio quando MFA estiver habilitado
+    AuthResponse:
+      type: object
+      required: [accessToken, refreshToken, expiresIn, tokenType]
+      properties:
+        accessToken: { type: string }
+        refreshToken: { type: string }
+        expiresIn: { type: integer, description: Segundos }
+        tokenType: { type: string, example: Bearer }
+    UserProfileUpdateRequest:
+      type: object
+      properties:
+        nome: { type: string, minLength: 2, maxLength: 150 }
+        idade: { type: integer, minimum: 13, maximum: 120 }
+        sexo: { type: string, enum: [MASCULINO, FEMININO, OUTRO, PREFIRO_NAO_INFORMAR] }
+        telefone: { type: string, minLength: 8, maxLength: 30 }
+    UserProfileResponse:
+      type: object
+      properties:
+        userId: { type: integer, format: int64 }
+        nome: { type: string }
+        email: { type: string, format: email }
+        idade: { type: integer }
+        sexo: { type: string }
+        telefone: { type: string }
+    SelecaoCreateRequest:
+      type: object
+      required: [nome, bandeiraUrl]
+      properties:
+        nome: { type: string, minLength: 2, maxLength: 120 }
+        bandeiraUrl: { type: string, format: uri }
+    SelecaoResponse:
+      type: object
+      properties:
+        id: { type: integer, format: int64 }
+        nome: { type: string }
+        bandeiraUrl: { type: string, format: uri }
+    JogoCreateRequest:
+      type: object
+      required: [fase, kickoffAt, selecaoCasaId, selecaoForaId]
+      properties:
+        fifaMatchId: { type: string }
+        fase: { type: string, example: "GRUPO A" }
+        rodada: { type: string, example: "1" }
+        estadio: { type: string }
+        kickoffAt: { type: string, format: date-time }
+        selecaoCasaId: { type: integer, format: int64 }
+        selecaoForaId: { type: integer, format: int64 }
+    ResultadoOficialRequest:
+      type: object
+      required: [golsCasa, golsFora]
+      properties:
+        golsCasa: { type: integer, minimum: 0 }
+        golsFora: { type: integer, minimum: 0 }
+    JogoResponse:
+      type: object
+      properties:
+        id: { type: integer, format: int64 }
+        fifaMatchId: { type: string }
+        fase: { type: string }
+        rodada: { type: string }
+        estadio: { type: string }
+        kickoffAt: { type: string, format: date-time }
+        status: { type: string, enum: [SCHEDULED, IN_PROGRESS, FINISHED] }
+        selecaoCasa:
+          $ref: "#/components/schemas/SelecaoResponse"
+        selecaoFora:
+          $ref: "#/components/schemas/SelecaoResponse"
+        golsCasa: { type: integer, nullable: true }
+        golsFora: { type: integer, nullable: true }
+    PalpiteCreateRequest:
+      type: object
+      required: [jogoId, golsCasaPalpite, golsForaPalpite]
+      properties:
+        jogoId: { type: integer, format: int64 }
+        golsCasaPalpite: { type: integer, minimum: 0 }
+        golsForaPalpite: { type: integer, minimum: 0 }
+    PalpiteResponse:
+      type: object
+      properties:
+        id: { type: integer, format: int64 }
+        jogoId: { type: integer, format: int64 }
+        userId: { type: integer, format: int64 }
+        golsCasaPalpite: { type: integer }
+        golsForaPalpite: { type: integer }
+        createdAt: { type: string, format: date-time }
+        pontos:
+          type: integer
+          nullable: true
+          description: Null enquanto resultado oficial nao publicado
+        acertoExato:
+          type: boolean
+          nullable: true
+    RankingItemResponse:
+      type: object
+      properties:
+        posicao: { type: integer }
+        userId: { type: integer, format: int64 }
+        nome: { type: string }
+        email: { type: string, format: email }
+        totalPontos: { type: integer }
+        totalAcertosExatos: { type: integer }
+        primeiroPalpiteEm: { type: string, format: date-time }

@@ -6,6 +6,7 @@ import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtBuilder;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.io.Decoders;
+import io.jsonwebtoken.io.DecodingException;
 import io.jsonwebtoken.security.Keys;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
@@ -102,10 +103,12 @@ public class JwtService {
     }
 
     private SecretKey signingKey() {
+        String secret = jwtProperties.secret();
         try {
-            return Keys.hmacShaKeyFor(Decoders.BASE64.decode(jwtProperties.secret()));
-        } catch (IllegalArgumentException ex) {
-            return Keys.hmacShaKeyFor(jwtProperties.secret().getBytes(StandardCharsets.UTF_8));
+            return Keys.hmacShaKeyFor(Decoders.BASE64.decode(secret));
+        } catch (IllegalArgumentException | DecodingException ex) {
+            // Segredo em texto plano (ex.: YAML com hífens) — não é Base64 válido
+            return Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));
         }
     }
 

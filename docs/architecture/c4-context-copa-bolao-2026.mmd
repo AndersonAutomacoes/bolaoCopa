@@ -1,0 +1,19 @@
+flowchart LR
+  %% C4 - Context Diagram
+  %% Person + System + External Systems
+
+  bettor["Person: Usuario Apostador"]
+  admin["Person: Administrador"]
+
+  bolao["System: Bolao Copa 2026\nPermite consultar jogos, registrar palpites,\ncalcular pontos e visualizar ranking."]
+
+  fifa["External System: Feed oficial de resultados FIFA"]
+  supabase["External System: Supabase (PostgreSQL MCP)"]
+  auth["External/Internal Existing System: Modulo de Autenticacao\n(CopaApplication)"]
+
+  bettor -->|"Usa via navegador (Flutter WebApp)"| bolao
+  admin -->|"Gerencia selecoes, jogos e resultados"| bolao
+
+  bolao -->|"Consome resultados oficiais de jogos"| fifa
+  bolao -->|"Persiste dados de usuarios, jogos, palpites e ranking"| supabase
+  bolao -->|"Autentica usuarios e emite/valida JWT/Refresh"| auth

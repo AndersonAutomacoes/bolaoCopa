@@ -1,0 +1,35 @@
+me:
+  get:
+    tags: [Users]
+    summary: Obter perfil do usuário autenticado
+    operationId: getMyProfile
+    security:
+      - bearerAuth: []
+    responses:
+      "200":
+        description: Perfil encontrado
+        content:
+          application/json:
+            schema:
+              $ref: "../schemas/users.yaml#/UserProfileResponse"
+      "404":
+        description: Perfil ainda não cadastrado
+  patch:
+    tags: [Users]
+    summary: Criar ou atualizar perfil do usuário autenticado
+    operationId: upsertMyProfile
+    security:
+      - bearerAuth: []
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: "../schemas/users.yaml#/UserProfileUpdateRequest"
+    responses:
+      "200":
+        description: Perfil salvo
+        content:
+          application/json:
+            schema:
+              $ref: "../schemas/users.yaml#/UserProfileResponse"

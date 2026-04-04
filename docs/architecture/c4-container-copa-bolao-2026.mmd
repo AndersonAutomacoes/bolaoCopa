@@ -1,0 +1,55 @@
+flowchart LR
+  %% C4 - Container Diagram
+  %% Containers inside Bolao Copa 2026 + dependencies
+
+  user["Person: Usuario Apostador"]
+  admin["Person: Administrador"]
+
+  subgraph system["System: Bolao Copa 2026"]
+    web["Container: Flutter WebApp\nTechnology: Flutter Web\nResponsibility: UI moderna para jogos, palpites, ranking e perfil."]
+
+    api["Container: Backend API\nTechnology: Java 21, Spring Boot\nResponsibility: Endpoints REST, regras de negocio, seguranca e orquestracao."]
+
+    scheduler["Container: Result Sync Scheduler\nTechnology: Spring Scheduler\nResponsibility: Importar resultados oficiais e disparar recalculo de pontuacao/ranking."]
+
+    rankingcache["Container: Ranking Materialization\nTechnology: PostgreSQL Materialized View\nResponsibility: Fornecer ranking performatico com desempate deterministico."]
+  end
+
+  auth["Container: Modulo de Autenticacao existente\nTechnology: Spring Security + JWT/Refresh\nResponsibility: Login, emissao/validacao de token, MFA."]
+  db["Container: PostgreSQL (Supabase MCP)\nTechnology: PostgreSQLDialect\nResponsibility: Persistencia transacional e consultas."]
+  fifa["External System: Feed oficial FIFA"]
+
+  user -->|"Acessa"| web
+  admin -->|"Acessa"| web
+
+  web -->|"HTTPS/JSON REST"| api
+  web -->|"Bearer JWT + Refresh"| auth
+
+  api -->|"Usa autenticacao e autorizacao"| auth
+  api -->|"JPA/SQL"| db
+
+  scheduler -->|"Busca resultados oficiais"| fifa
+  scheduler -->|"Atualiza jogos e aciona calculo"| api
+
+  rankingcache -->|"Le dados de palpites/pontuacoes"| db
+  api -.->|"Consulta ranking pronto (MV/View)"| rankingcache
+
+  tie["Business Rule: Desempate Ranking\n1 total_pontos DESC\n2 total_acertos_exatos DESC\n3 primeiro_palpite_em ASC"]
+  api --> tie
+  tie -.-> rankingcache
+
+  subgraph LEG["Legenda Visual"]
+    LTX["Transacional (OLTP)"]
+    LRM["Read Model / Consulta"]
+    LEXT["Externo / Ator"]
+  end
+
+  classDef tx fill:#E8F1FF,stroke:#2563EB,stroke-width:1px,color:#0F172A;
+  classDef rm fill:#FFF4E5,stroke:#D97706,stroke-width:1.2px,color:#111827;
+  classDef ext fill:#F8FAFC,stroke:#64748B,stroke-width:1px,color:#0F172A;
+  classDef lg fill:#F8FAFC,stroke:#64748B,stroke-width:1px,color:#0F172A;
+
+  class web,api,scheduler,auth,db,tie tx;
+  class rankingcache rm;
+  class user,admin,fifa ext;
+  class LTX,LRM,LEXT lg;

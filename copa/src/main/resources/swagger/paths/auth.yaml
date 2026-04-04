@@ -1,0 +1,56 @@
+register:
+  post:
+    tags: [Auth]
+    summary: Registrar novo usuário
+    operationId: register
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: "../schemas/auth.yaml#/RegisterRequest"
+    responses:
+      "201":
+        description: Usuário criado
+
+login:
+  post:
+    tags: [Auth]
+    summary: Login (credenciais ou etapa MFA)
+    operationId: login
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: "../schemas/auth.yaml#/LoginRequest"
+    responses:
+      "200":
+        description: Sessão ou desafio MFA
+        content:
+          application/json:
+            schema:
+              $ref: "../schemas/auth.yaml#/AuthResponse"
+
+refresh:
+  post:
+    tags: [Auth]
+    summary: Renovar access token
+    operationId: refresh
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required: [refreshToken]
+            properties:
+              refreshToken:
+                type: string
+    responses:
+      "200":
+        description: Novos tokens
+        content:
+          application/json:
+            schema:
+              $ref: "../schemas/auth.yaml#/AuthResponse"

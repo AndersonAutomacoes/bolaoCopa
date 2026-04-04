@@ -1,0 +1,63 @@
+register:
+  post:
+    tags: [Auth]
+    summary: Cadastra novo usuario
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: "../openapi.yaml#/components/schemas/RegisterRequest"
+    responses:
+      "201":
+        description: Usuario criado
+        content:
+          application/json:
+            schema:
+              $ref: "../openapi.yaml#/components/schemas/AuthResponse"
+      "409":
+        description: Email ja cadastrado
+
+login:
+  post:
+    tags: [Auth]
+    summary: Autentica usuario
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: "../openapi.yaml#/components/schemas/LoginRequest"
+    responses:
+      "200":
+        description: Login efetuado
+        content:
+          application/json:
+            schema:
+              $ref: "../openapi.yaml#/components/schemas/AuthResponse"
+      "401":
+        description: Credenciais invalidas
+
+refresh:
+  post:
+    tags: [Auth]
+    summary: Renova access token
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required: [refreshToken]
+            properties:
+              refreshToken:
+                type: string
+    responses:
+      "200":
+        description: Token renovado
+        content:
+          application/json:
+            schema:
+              $ref: "../openapi.yaml#/components/schemas/AuthResponse"
+      "401":
+        description: Refresh token invalido

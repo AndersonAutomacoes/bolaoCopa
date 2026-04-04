@@ -1,0 +1,114 @@
+flowchart LR
+  %% C4 - Component Diagram (Backend API)
+  %% Scope: Spring Boot Backend API
+
+  web["Container: Flutter WebApp"]
+  db["Container: PostgreSQL (Supabase MCP)"]
+  fifa["External System: Feed oficial FIFA"]
+
+  subgraph api["Container: Backend API (Java 21 + Spring Boot)"]
+    subgraph auth["Component Group: Auth"]
+      authController["Component: AuthController\nResponsibility: login, refresh, MFA endpoints"]
+      authService["Component: AuthService\nResponsibility: autenticacao, emissao/rotacao de tokens"]
+      jwtService["Component: JwtService\nResponsibility: gerar/validar JWT"]
+      mfaService["Component: MfaService\nResponsibility: TOTP e validacao MFA"]
+      appUserRepo["Component: AppUserRepository"]
+      refreshTokenRepo["Component: RefreshTokenRepository"]
+    end
+
+    subgraph jogos["Component Group: Jogos"]
+      jogoController["Component: JogoController\nResponsibility: consulta e administracao de jogos"]
+      jogoService["Component: JogoService\nResponsibility: regras de jogos e resultado oficial"]
+      selecaoService["Component: SelecaoService\nResponsibility: cadastro de selecoes/bandeiras"]
+      jogoRepo["Component: JogoRepository"]
+      selecaoRepo["Component: SelecaoRepository"]
+      resultSync["Component: ResultSyncScheduler\nResponsibility: sincronizar resultados FIFA"]
+    end
+
+    subgraph palpites["Component Group: Palpites"]
+      palpiteController["Component: PalpiteController\nResponsibility: CRUD de palpites do usuario"]
+      palpiteService["Component: PalpiteService\nResponsibility: validacao de janela, unicidade user+jogo"]
+      palpiteRepo["Component: PalpiteRepository"]
+    end
+
+    subgraph pontuacao["Component Group: Pontuacao"]
+      pontuacaoService["Component: PontuacaoService\nResponsibility: calcular pontos por resultado oficial"]
+      rulesEngine["Component: ScoringRulesEngine\nResponsibility: vencedor=3, exato=5, erro=0"]
+      pontuacaoRepo["Component: PontuacaoPalpiteRepository"]
+    end
+
+    subgraph ranking["Component Group: Ranking"]
+      rankingController["Component: RankingController\nResponsibility: expor ranking para UI"]
+      rankingService["Component: RankingService\nResponsibility: consolidar ranking e desempate"]
+      rankingReadRepo["Component: RankingReadRepository\nResponsibility: ler v_ranking_usuarios/mv_ranking_usuarios"]
+      rankingRefreshJob["Component: RankingRefreshJob\nResponsibility: refresh MV (quando aplicavel)"]
+    end
+
+    security["Component: SecurityFilterChain\nResponsibility: autenticar/autorizacao por JWT roles"]
+  end
+
+  %% Entradas do frontend
+  web -->|"HTTPS/JSON"| security
+  security --> authController
+  security --> jogoController
+  security --> palpiteController
+  security --> rankingController
+
+  %% Fluxo Auth
+  authController --> authService
+  authService --> jwtService
+  authService --> mfaService
+  authService --> appUserRepo
+  authService --> refreshTokenRepo
+
+  %% Fluxo Jogos
+  jogoController --> jogoService
+  jogoService --> jogoRepo
+  jogoService --> selecaoService
+  selecaoService --> selecaoRepo
+  resultSync --> fifa
+  resultSync --> jogoService
+
+  %% Fluxo Palpites
+  palpiteController --> palpiteService
+  palpiteService --> palpiteRepo
+  palpiteService --> jogoService
+
+  %% Fluxo Pontuacao
+  jogoService --> pontuacaoService
+  palpiteService --> pontuacaoService
+  pontuacaoService --> rulesEngine
+  pontuacaoService --> pontuacaoRepo
+  pontuacaoService --> palpiteRepo
+  pontuacaoService --> jogoRepo
+
+  %% Fluxo Ranking
+  pontuacaoService --> rankingService
+  rankingController --> rankingService
+  rankingService --> rankingReadRepo
+  rankingRefreshJob --> rankingService
+
+  %% Persistencia (visao logica)
+  appUserRepo --> db
+  refreshTokenRepo --> db
+  jogoRepo --> db
+  selecaoRepo --> db
+  palpiteRepo --> db
+  pontuacaoRepo --> db
+  rankingReadRepo --> db
+
+  subgraph LEG["Legenda Visual"]
+    LTX["Transacional (OLTP)"]
+    LRM["Read Model / Consulta"]
+    LEXT["Externo / Ator"]
+  end
+
+  classDef tx fill:#E8F1FF,stroke:#2563EB,stroke-width:1px,color:#0F172A;
+  classDef rm fill:#FFF4E5,stroke:#D97706,stroke-width:1.2px,color:#111827;
+  classDef ext fill:#F8FAFC,stroke:#64748B,stroke-width:1px,color:#0F172A;
+  classDef lg fill:#F8FAFC,stroke:#64748B,stroke-width:1px,color:#0F172A;
+
+  class authController,authService,jwtService,mfaService,appUserRepo,refreshTokenRepo,jogoController,jogoService,selecaoService,jogoRepo,selecaoRepo,resultSync,palpiteController,palpiteService,palpiteRepo,pontuacaoService,rulesEngine,pontuacaoRepo,rankingController,rankingService,rankingRefreshJob,security,db tx;
+  class rankingReadRepo rm;
+  class web,fifa ext;
+  class LTX,LRM,LEXT lg;

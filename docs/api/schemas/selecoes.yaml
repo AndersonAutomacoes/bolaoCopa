@@ -1,0 +1,13 @@
+SelecaoCreateRequest:
+  type: object
+  required: [nome, bandeiraUrl]
+  properties:
+    nome: { type: string, minLength: 2, maxLength: 120 }
+    bandeiraUrl: { type: string, format: uri }
+
+SelecaoResponse:
+  type: object
+  properties:
+    id: { type: integer, format: int64 }
+    nome: { type: string }
+    bandeiraUrl: { type: string, format: uri }

@@ -1,0 +1,148 @@
+flowchart LR
+  %% C4 Component - API + Ports/Adapters (Hexagonal)
+
+  web["External Actor/Client: Flutter WebApp"]
+  fifa["External System: Feed oficial FIFA"]
+  pg["External System: PostgreSQL (Supabase MCP)"]
+
+  subgraph api["Container: Backend API (Spring Boot, Java 21)"]
+    direction LR
+
+    subgraph inb["Inbound Adapters"]
+      authRest["REST Adapter: AuthController"]
+      jogosRest["REST Adapter: JogoController"]
+      palpitesRest["REST Adapter: PalpiteController"]
+      rankingRest["REST Adapter: RankingController"]
+      userRest["REST Adapter: UserController"]
+      selecaoRest["REST Adapter: SelecaoController"]
+      syncJob["Scheduler Adapter: ResultSyncScheduler"]
+      security["Security Adapter: SecurityFilterChain + JWT"]
+    end
+
+    subgraph app["Application Core (Use Cases)"]
+      authUC["Use Case: AuthenticateUser / RefreshSession / VerifyMfa"]
+      jogosUC["Use Case: ManageJogos / PublishResultadoOficial"]
+      palpitesUC["Use Case: RegistrarPalpite / AtualizarPalpite"]
+      scoreUC["Use Case: CalcularPontuacaoPorJogo"]
+      rankingUC["Use Case: ObterRanking / RecalcularRanking"]
+      usersUC["Use Case: ManageUserProfile"]
+      selecaoUC["Use Case: ManageSelecoes"]
+    end
+
+    subgraph domain["Domain Core"]
+      scoreRules["Domain Service: ScoringRulesEngine\n(vencedor=3, exato=5, erro=0)"]
+      tieRules["Domain Service: RankingTieBreakPolicy\n(pts DESC, exatos DESC, primeiro_palpite ASC)"]
+      authModel["Entities: AppUser, RefreshToken"]
+      bolaoModel["Entities: Jogo, Selecao, Palpite, PontuacaoPalpite"]
+    end
+
+    subgraph ports["Ports"]
+      outUserPort["Output Port: UserRepositoryPort"]
+      outTokenPort["Output Port: RefreshTokenRepositoryPort"]
+      outJogoPort["Output Port: JogoRepositoryPort"]
+      outSelecaoPort["Output Port: SelecaoRepositoryPort"]
+      outPalpitePort["Output Port: PalpiteRepositoryPort"]
+      outPontuacaoPort["Output Port: PontuacaoRepositoryPort"]
+      outRankingReadPort["Output Port: RankingReadPort"]
+      outRankingRefreshPort["Output Port: RankingRefreshPort"]
+      outFifaPort["Output Port: FifaResultsPort"]
+    end
+
+    subgraph outb["Outbound Adapters"]
+      userJpa["JPA Adapter: AppUserRepository"]
+      tokenJpa["JPA Adapter: RefreshTokenRepository"]
+      jogoJpa["JPA Adapter: JogoRepository"]
+      selecaoJpa["JPA Adapter: SelecaoRepository"]
+      palpiteJpa["JPA Adapter: PalpiteRepository"]
+      pontuacaoJpa["JPA Adapter: PontuacaoPalpiteRepository"]
+      rankingSql["SQL Adapter: RankingReadRepository (View/MV)"]
+      rankingRefresh["SQL Adapter: RankingRefreshRepository (refresh_mv_ranking_usuarios)"]
+      fifaClient["HTTP Adapter: FifaResultsClient"]
+    end
+  end
+
+  %% Entry flows
+  web --> security
+  security --> authRest
+  security --> jogosRest
+  security --> palpitesRest
+  security --> rankingRest
+  security --> userRest
+  security --> selecaoRest
+  fifa --> syncJob
+
+  %% Inbound -> Use Cases
+  authRest --> authUC
+  jogosRest --> jogosUC
+  palpitesRest --> palpitesUC
+  rankingRest --> rankingUC
+  userRest --> usersUC
+  selecaoRest --> selecaoUC
+  syncJob --> jogosUC
+
+  %% Use Cases -> Domain
+  authUC --> authModel
+  jogosUC --> bolaoModel
+  palpitesUC --> bolaoModel
+  scoreUC --> scoreRules
+  rankingUC --> tieRules
+  scoreUC --> bolaoModel
+  rankingUC --> bolaoModel
+
+  %% Cross-use-case orchestration
+  jogosUC --> scoreUC
+  palpitesUC --> scoreUC
+  scoreUC --> rankingUC
+
+  %% Use Cases -> Ports
+  authUC --> outUserPort
+  authUC --> outTokenPort
+  jogosUC --> outJogoPort
+  jogosUC --> outSelecaoPort
+  jogosUC --> outFifaPort
+  palpitesUC --> outPalpitePort
+  scoreUC --> outJogoPort
+  scoreUC --> outPalpitePort
+  scoreUC --> outPontuacaoPort
+  rankingUC --> outRankingReadPort
+  rankingUC --> outRankingRefreshPort
+  usersUC --> outUserPort
+  selecaoUC --> outSelecaoPort
+
+  %% Ports -> Adapters
+  outUserPort --> userJpa
+  outTokenPort --> tokenJpa
+  outJogoPort --> jogoJpa
+  outSelecaoPort --> selecaoJpa
+  outPalpitePort --> palpiteJpa
+  outPontuacaoPort --> pontuacaoJpa
+  outRankingReadPort -.-> rankingSql
+  outRankingRefreshPort --> rankingRefresh
+  outFifaPort --> fifaClient
+
+  %% Adapters -> External systems
+  userJpa --> pg
+  tokenJpa --> pg
+  jogoJpa --> pg
+  selecaoJpa --> pg
+  palpiteJpa --> pg
+  pontuacaoJpa --> pg
+  rankingSql -.-> pg
+  rankingRefresh -.-> pg
+  fifaClient --> fifa
+
+  subgraph LEG["Legenda Visual"]
+    LTX["Transacional (OLTP)"]
+    LRM["Read Model / Consulta"]
+    LEXT["Externo / Ator"]
+  end
+
+  classDef tx fill:#E8F1FF,stroke:#2563EB,stroke-width:1px,color:#0F172A;
+  classDef rm fill:#FFF4E5,stroke:#D97706,stroke-width:1.2px,color:#111827;
+  classDef ext fill:#F8FAFC,stroke:#64748B,stroke-width:1px,color:#0F172A;
+  classDef lg fill:#F8FAFC,stroke:#64748B,stroke-width:1px,color:#0F172A;
+
+  class authRest,jogosRest,palpitesRest,rankingRest,userRest,selecaoRest,syncJob,security,authUC,jogosUC,palpitesUC,scoreUC,usersUC,selecaoUC,authModel,bolaoModel,outUserPort,outTokenPort,outJogoPort,outSelecaoPort,outPalpitePort,outPontuacaoPort,outRankingRefreshPort,outFifaPort,userJpa,tokenJpa,jogoJpa,selecaoJpa,palpiteJpa,pontuacaoJpa,rankingRefresh,fifaClient,pg tx;
+  class rankingUC,tieRules,outRankingReadPort,rankingSql rm;
+  class web,fifa ext;
+  class LTX,LRM,LEXT lg;

@@ -1,0 +1,54 @@
+collection:
+  get:
+    tags: [Selecoes]
+    summary: Lista selecoes
+    responses:
+      "200":
+        description: Lista de selecoes
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: "../openapi.yaml#/components/schemas/SelecaoResponse"
+  post:
+    tags: [Selecoes]
+    summary: Cadastra selecao
+    security: [{ bearerAuth: [] }]
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: "../openapi.yaml#/components/schemas/SelecaoCreateRequest"
+    responses:
+      "201":
+        description: Selecao criada
+        content:
+          application/json:
+            schema:
+              $ref: "../openapi.yaml#/components/schemas/SelecaoResponse"
+
+item:
+  put:
+    tags: [Selecoes]
+    summary: Atualiza selecao
+    security: [{ bearerAuth: [] }]
+    parameters:
+      - in: path
+        name: id
+        required: true
+        schema: { type: integer, format: int64 }
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: "../openapi.yaml#/components/schemas/SelecaoCreateRequest"
+    responses:
+      "200":
+        description: Selecao atualizada
+        content:
+          application/json:
+            schema:
+              $ref: "../openapi.yaml#/components/schemas/SelecaoResponse"
