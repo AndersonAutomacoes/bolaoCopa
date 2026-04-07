@@ -9,4 +9,6 @@ public interface BolaoGrupoRepository extends JpaRepository<BolaoGrupo, Long> {
     Optional<BolaoGrupo> findByCodigoConvite(String codigoConvite);
 
     List<BolaoGrupo> findByOwner_IdOrderByCreatedAtDesc(Long ownerId);
+
+    List<BolaoGrupo> findByPublicoTrueOrderByCreatedAtDesc();
 }

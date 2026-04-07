@@ -7,6 +7,7 @@ final class RankingItemDto {
     required this.totalPontos,
     required this.totalAcertosExatos,
     this.primeiroPalpiteEm,
+    this.avatarUrl,
   });
 
   final int posicao;
@@ -16,6 +17,7 @@ final class RankingItemDto {
   final int totalPontos;
   final int totalAcertosExatos;
   final DateTime? primeiroPalpiteEm;
+  final String? avatarUrl;
 
   factory RankingItemDto.fromJson(Map<String, dynamic> json) {
     return RankingItemDto(
@@ -27,6 +29,7 @@ final class RankingItemDto {
       totalAcertosExatos: (json['totalAcertosExatos'] as num).toInt(),
       primeiroPalpiteEm:
           json['primeiroPalpiteEm'] != null ? DateTime.tryParse(json['primeiroPalpiteEm'] as String) : null,
+      avatarUrl: json['avatarUrl'] as String?,
     );
   }
 }

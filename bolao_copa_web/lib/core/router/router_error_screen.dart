@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../widgets/app_error_view.dart';
+import '../widgets/app_shell_app_bar_actions.dart';
 import 'app_router.dart';
 
 /// Ecrã de erro de navegação (rota inválida ou falha do router), alinhado ao estado “router error” da direção visual.
@@ -34,6 +35,13 @@ class RouterErrorScreen extends StatelessWidget {
     }
 
     return Scaffold(
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      appBar: AppRouter.auth.isLoggedIn
+          ? AppBar(
+              title: const Text('Página não encontrada'),
+              actions: AppShellAppBarActions.build(context),
+            )
+          : null,
       body: SafeArea(
         child: AppErrorView(
           title: 'Não encontrámos esta página',

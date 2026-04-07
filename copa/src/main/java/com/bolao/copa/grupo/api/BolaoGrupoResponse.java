@@ -7,6 +7,8 @@ public record BolaoGrupoResponse(
         String nome,
         String codigoConvite,
         Long ownerUserId,
-        Instant createdAt
+        Instant createdAt,
+        boolean publico,
+        String premiacaoTexto
 ) {
 }

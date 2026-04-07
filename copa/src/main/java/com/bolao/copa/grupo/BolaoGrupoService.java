@@ -4,14 +4,19 @@ import com.bolao.copa.auth.user.AppUser;
 import com.bolao.copa.grupo.api.BolaoGrupoCreateRequest;
 import com.bolao.copa.grupo.api.BolaoGrupoJoinRequest;
 import com.bolao.copa.grupo.api.BolaoGrupoResponse;
+import com.bolao.copa.grupo.api.BolaoGrupoUpdateRequest;
 import com.bolao.copa.plan.PlanService;
 import com.bolao.copa.plan.PlanTier;
+import com.bolao.copa.profile.UserProfile;
+import com.bolao.copa.profile.UserProfileRepository;
 import com.bolao.copa.ranking.MvRankingUsuario;
 import com.bolao.copa.ranking.MvRankingUsuarioRepository;
 import com.bolao.copa.ranking.api.RankingItemResponse;
 import java.security.SecureRandom;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -25,16 +30,19 @@ public class BolaoGrupoService {
     private final BolaoGrupoRepository bolaoGrupoRepository;
     private final BolaoGrupoMembroRepository bolaoGrupoMembroRepository;
     private final MvRankingUsuarioRepository mvRankingUsuarioRepository;
+    private final UserProfileRepository userProfileRepository;
     private final PlanService planService;
 
     public BolaoGrupoService(
             BolaoGrupoRepository bolaoGrupoRepository,
             BolaoGrupoMembroRepository bolaoGrupoMembroRepository,
             MvRankingUsuarioRepository mvRankingUsuarioRepository,
+            UserProfileRepository userProfileRepository,
             PlanService planService) {
         this.bolaoGrupoRepository = bolaoGrupoRepository;
         this.bolaoGrupoMembroRepository = bolaoGrupoMembroRepository;
         this.mvRankingUsuarioRepository = mvRankingUsuarioRepository;
+        this.userProfileRepository = userProfileRepository;
         this.planService = planService;
     }
 
@@ -72,6 +80,46 @@ public class BolaoGrupoService {
     }
 
     @Transactional(readOnly = true)
+    public List<BolaoGrupoResponse> listPublic() {
+        return bolaoGrupoRepository.findByPublicoTrueOrderByCreatedAtDesc().stream()
+                .map(BolaoGrupoMapper::toResponse)
+                .toList();
+    }
+
+    @Transactional(readOnly = true)
+    public BolaoGrupoResponse getById(Long bolaoId, AppUser user) {
+        BolaoGrupo g = bolaoGrupoRepository
+                .findById(bolaoId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Bolão não encontrado"));
+        if (g.isPublico()) {
+            return BolaoGrupoMapper.toResponse(g);
+        }
+        if (!bolaoGrupoMembroRepository.existsByBolaoIdAndUserId(bolaoId, user.getId())) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Acesso ao bolão apenas para membros");
+        }
+        return BolaoGrupoMapper.toResponse(g);
+    }
+
+    @Transactional
+    public BolaoGrupoResponse update(Long bolaoId, AppUser user, BolaoGrupoUpdateRequest request) {
+        BolaoGrupo g = bolaoGrupoRepository
+                .findById(bolaoId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Bolão não encontrado"));
+        if (!g.getOwner().getId().equals(user.getId())) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Apenas o dono pode alterar o bolão");
+        }
+        if (request.publico() != null) {
+            g.setPublico(request.publico());
+        }
+        if (request.premiacaoTexto() != null) {
+            String t = request.premiacaoTexto().trim();
+            g.setPremiacaoTexto(t.isEmpty() ? null : t);
+        }
+        bolaoGrupoRepository.save(g);
+        return BolaoGrupoMapper.toResponse(g);
+    }
+
+    @Transactional(readOnly = true)
     public List<RankingItemResponse> rankingBolao(Long bolaoId, AppUser user) {
         bolaoGrupoRepository.findById(bolaoId).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Bolão não encontrado"));
         if (!bolaoGrupoMembroRepository.existsByBolaoIdAndUserId(bolaoId, user.getId())) {
@@ -84,6 +132,8 @@ public class BolaoGrupoService {
             return List.of();
         }
         List<MvRankingUsuario> rows = mvRankingUsuarioRepository.findAllByUserIdInOrder(memberIds);
+        Map<Long, String> avatars = avatarUrlsByUserId(
+                rows.stream().map(MvRankingUsuario::getUserId).toList());
         List<RankingItemResponse> out = new ArrayList<>();
         long pos = 1;
         for (MvRankingUsuario row : rows) {
@@ -94,7 +144,19 @@ public class BolaoGrupoService {
                     row.getNome(),
                     row.getTotalPontos(),
                     row.getTotalAcertosExatos(),
-                    row.getPrimeiroPalpiteEm()));
+                    row.getPrimeiroPalpiteEm(),
+                    avatars.get(row.getUserId())));
+        }
+        return out;
+    }
+
+    private Map<Long, String> avatarUrlsByUserId(List<Long> userIds) {
+        if (userIds.isEmpty()) {
+            return Map.of();
+        }
+        Map<Long, String> out = new HashMap<>();
+        for (UserProfile p : userProfileRepository.findByUserIdIn(userIds)) {
+            out.put(p.getUserId(), p.getAvatarUrl());
         }
         return out;
     }

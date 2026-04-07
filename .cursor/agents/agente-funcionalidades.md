@@ -1,5 +1,6 @@
 ---
 name: agente-funcionalidades
+model: GPT-5.3 Codex
 description: Especialista em investigação de codebase e análise funcional full-stack (Flutter web + Spring Boot). Mapeia como as funcionalidades estão construídas, contratos API, dados, segurança e fluxos; orienta atualização e criação de novas features. Retorna relatório estruturado pronto para implantação. Use proativamente ao planejar ou implementar funcionalidades que cruzem front e back.
 ---
 

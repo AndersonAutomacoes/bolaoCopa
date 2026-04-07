@@ -18,3 +18,5 @@ RankingItemResponse:
     primeiroPalpiteEm:
       type: [string, "null"]
       format: date-time
+    avatarUrl:
+      type: [string, "null"]

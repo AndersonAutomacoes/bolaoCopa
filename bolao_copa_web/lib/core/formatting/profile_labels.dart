@@ -1,3 +1,18 @@
+import 'package:intl/intl.dart';
+
+/// Iniciais para avatar (ex.: "Ana Silva" → "AS").
+String profileInitialsFromName(String name) {
+  final parts = name.trim().split(RegExp(r'\s+'));
+  if (parts.isEmpty) return '?';
+  if (parts.length == 1) {
+    final s = parts[0];
+    return s.isEmpty ? '?' : s[0].toUpperCase();
+  }
+  final a = parts.first.isNotEmpty ? parts.first[0] : '';
+  final b = parts.last.isNotEmpty ? parts.last[0] : '';
+  return ('$a$b').toUpperCase();
+}
+
 /// Nome amigável do plano comercial exibido na UI.
 String formatPlanTierLabel(String tier) {
   switch (tier.toUpperCase()) {
@@ -39,4 +54,10 @@ String formatSexoDisplay(String raw) {
     default:
       return raw;
   }
+}
+
+/// Ex.: "Março 2023" para o mockup de perfil.
+String formatMemberSincePtBr(DateTime? createdAt) {
+  if (createdAt == null) return '—';
+  return DateFormat('MMMM yyyy', 'pt_BR').format(createdAt.toLocal());
 }

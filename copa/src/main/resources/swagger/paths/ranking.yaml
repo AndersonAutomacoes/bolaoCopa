@@ -1,10 +1,25 @@
 collection:
   get:
     tags: [Ranking]
-    summary: Ranking geral
+    summary: Ranking geral ou por período (palpites cujo jogo tem kickoff no intervalo)
     operationId: listRanking
     security:
       - bearerAuth: []
+    parameters:
+      - name: period
+        in: query
+        required: false
+        schema:
+          type: string
+          enum: [GLOBAL, WEEK, MONTH, SEMANAL, MENSAL]
+          default: GLOBAL
+        description: GLOBAL = materializado geral; WEEK/SEMANAL = semana civil (seg–dom, fuso America/Sao_Paulo); MONTH/MENSAL = mês civil corrente
+      - name: nome
+        in: query
+        required: false
+        schema:
+          type: string
+        description: Filtro por substring no nome ou email (sem distinção de maiúsculas)
     responses:
       "200":
         description: Posições ordenadas

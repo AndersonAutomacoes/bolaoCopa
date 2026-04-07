@@ -2,6 +2,31 @@ spring:
   application:
     name: copa
 
+  security:
+    oauth2:
+      client:
+        registration:
+          google:
+            provider: google
+            client-id: ${GOOGLE_CLIENT_ID:not-configured}
+            client-secret: ${GOOGLE_CLIENT_SECRET:not-configured}
+            scope:
+              - openid
+              - profile
+              - email
+          facebook:
+            provider: facebook
+            client-id: ${FACEBOOK_CLIENT_ID:not-configured}
+            client-secret: ${FACEBOOK_CLIENT_SECRET:not-configured}
+            scope:
+              - email
+              - public_profile
+
+  servlet:
+    multipart:
+      max-file-size: 2MB
+      max-request-size: 2MB
+
   datasource:
     url: jdbc:postgresql://localhost:5432/bolaoCopadb
     username: postgres
@@ -17,6 +42,13 @@ spring:
   flyway:
     enabled: true
     locations: classpath:db/migration
+
+app:
+  # Base URL do front (Flutter web) para links em e-mail / logs de recuperação de senha.
+  public-url: ${APP_PUBLIC_URL:http://localhost:5555}
+  avatar:
+    storage-dir: ${user.dir}/data/avatar-uploads
+    public-base-url: http://localhost:8080
 
 security:
   jwt:

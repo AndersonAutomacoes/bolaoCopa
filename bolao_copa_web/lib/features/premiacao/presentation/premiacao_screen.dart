@@ -5,7 +5,10 @@ import '../../../core/api/api_exception.dart';
 import '../../../core/api/bolao_api.dart';
 import '../../../core/api/error_message.dart';
 import '../../../core/formatting/currency_format.dart';
+import '../../../core/theme/app_layout.dart';
+import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/app_empty_state.dart';
+import '../../../core/widgets/app_shell_app_bar_actions.dart';
 import '../../../core/widgets/app_error_view.dart';
 import '../../../core/widgets/app_list_skeleton.dart';
 
@@ -105,10 +108,14 @@ class _PremiacaoScreenState extends State<PremiacaoScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
         leading: IconButton(icon: const Icon(Icons.close), onPressed: () => context.pop()),
         title: const Text('Premiação'),
-        actions: [IconButton(onPressed: _reload, icon: const Icon(Icons.refresh))],
+        actions: AppShellAppBarActions.build(
+          context,
+          extra: [IconButton(onPressed: _reload, icon: const Icon(Icons.refresh))],
+        ),
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: _novaRegra,
@@ -118,7 +125,7 @@ class _PremiacaoScreenState extends State<PremiacaoScreen> {
         future: _future,
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
-            return const AppListSkeleton();
+            return const AppListSkeleton(padding: AppLayout.pagePaddingAll);
           }
           if (snapshot.hasError) {
             return AppErrorView(
@@ -135,20 +142,31 @@ class _PremiacaoScreenState extends State<PremiacaoScreen> {
               icon: Icons.emoji_events_outlined,
             );
           }
+          final scheme = Theme.of(context).colorScheme;
           return ListView.separated(
-            padding: const EdgeInsets.all(16),
+            padding: AppLayout.pagePaddingHV,
             itemCount: list.length,
-            separatorBuilder: (_, __) => const Divider(height: 1),
+            separatorBuilder: (_, __) => const SizedBox(height: 12),
             itemBuilder: (context, i) {
               final r = list[i];
               final rawCent = r['valorTotalCentavos'];
               final centavos = rawCent is int
                   ? rawCent
                   : (rawCent is num ? rawCent.toInt() : int.tryParse('$rawCent') ?? 0);
-              return ListTile(
-                title: Text(r['nome'] as String? ?? ''),
-                subtitle: Text(
-                  'Escopo: ${r['escopo']} · Premiados: ${r['qtdPremiados']} · Total: ${formatBrlFromCentavos(centavos)}',
+              return Card(
+                margin: EdgeInsets.zero,
+                child: ListTile(
+                  leading: CircleAvatar(
+                    backgroundColor: AppTheme.secondaryGold.withValues(alpha: 0.22),
+                    child: Icon(Icons.emoji_events_outlined, size: 22, color: scheme.secondary),
+                  ),
+                  title: Text(
+                    r['nome'] as String? ?? '',
+                    style: const TextStyle(fontWeight: FontWeight.w600),
+                  ),
+                  subtitle: Text(
+                    'Escopo: ${r['escopo']} · Premiados: ${r['qtdPremiados']} · Total: ${formatBrlFromCentavos(centavos)}',
+                  ),
                 ),
               );
             },

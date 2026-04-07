@@ -13,6 +13,8 @@ final class BolaoGrupoMapper {
                 g.getNome(),
                 g.getCodigoConvite(),
                 g.getOwner().getId(),
-                g.getCreatedAt());
+                g.getCreatedAt(),
+                g.isPublico(),
+                g.getPremiacaoTexto());
     }
 }

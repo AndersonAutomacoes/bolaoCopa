@@ -1,6 +1,7 @@
 package com.bolao.copa.auth;
 
 import com.bolao.copa.auth.api.AuthResponse;
+import com.bolao.copa.auth.api.ForgotPasswordRequest;
 import com.bolao.copa.auth.api.LoginRequest;
 import com.bolao.copa.auth.api.LogoutRequest;
 import com.bolao.copa.auth.api.MfaEnableRequest;
@@ -8,6 +9,7 @@ import com.bolao.copa.auth.api.MfaSetupResponse;
 import com.bolao.copa.auth.api.MfaVerifyRequest;
 import com.bolao.copa.auth.api.RefreshTokenRequest;
 import com.bolao.copa.auth.api.RegisterRequest;
+import com.bolao.copa.auth.api.ResetPasswordRequest;
 import com.bolao.copa.auth.token.SessionContext;
 import jakarta.servlet.http.HttpServletRequest;
 import com.bolao.copa.auth.user.AppUser;
@@ -34,6 +36,18 @@ public class AuthController {
     @ResponseStatus(HttpStatus.CREATED)
     public void register(@Valid @RequestBody RegisterRequest request) {
         authService.register(request);
+    }
+
+    @PostMapping("/forgot-password")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void forgotPassword(@Valid @RequestBody ForgotPasswordRequest request) {
+        authService.requestPasswordReset(request.email());
+    }
+
+    @PostMapping("/reset-password")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void resetPassword(@Valid @RequestBody ResetPasswordRequest request) {
+        authService.resetPassword(request.token(), request.newPassword());
     }
 
     @PostMapping("/login")

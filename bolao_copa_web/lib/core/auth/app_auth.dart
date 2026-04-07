@@ -137,6 +137,20 @@ final class AppAuth extends ChangeNotifier {
     );
   }
 
+  /// Após redirect OAuth2 (tokens na query do [oauth-bridge]).
+  Future<void> applyOAuthTokens(String accessToken, String? refreshToken) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(SessionTokens.accessTokenKey, accessToken);
+    if (refreshToken != null && refreshToken.isNotEmpty) {
+      await prefs.setString(SessionTokens.refreshTokenKey, refreshToken);
+    } else {
+      await prefs.remove(SessionTokens.refreshTokenKey);
+    }
+    _loggedIn = true;
+    _applyPlanTierFromAccessToken(accessToken);
+    notifyListeners();
+  }
+
   Future<void> logout() async {
     final prefs = await SharedPreferences.getInstance();
     final refresh = prefs.getString(SessionTokens.refreshTokenKey);

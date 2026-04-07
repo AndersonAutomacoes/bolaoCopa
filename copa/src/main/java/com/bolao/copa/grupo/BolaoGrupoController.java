@@ -4,12 +4,14 @@ import com.bolao.copa.auth.user.AppUser;
 import com.bolao.copa.grupo.api.BolaoGrupoCreateRequest;
 import com.bolao.copa.grupo.api.BolaoGrupoJoinRequest;
 import com.bolao.copa.grupo.api.BolaoGrupoResponse;
+import com.bolao.copa.grupo.api.BolaoGrupoUpdateRequest;
 import com.bolao.copa.ranking.api.RankingItemResponse;
 import jakarta.validation.Valid;
 import java.util.List;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -42,6 +44,24 @@ public class BolaoGrupoController {
     @GetMapping("/mine")
     public List<BolaoGrupoResponse> listMine(@AuthenticationPrincipal AppUser user) {
         return bolaoGrupoService.listMine(user);
+    }
+
+    @GetMapping("/public")
+    public List<BolaoGrupoResponse> listPublic() {
+        return bolaoGrupoService.listPublic();
+    }
+
+    @PatchMapping("/{id}")
+    public BolaoGrupoResponse update(
+            @PathVariable Long id,
+            @AuthenticationPrincipal AppUser user,
+            @Valid @RequestBody BolaoGrupoUpdateRequest request) {
+        return bolaoGrupoService.update(id, user, request);
+    }
+
+    @GetMapping("/{id}")
+    public BolaoGrupoResponse getById(@PathVariable Long id, @AuthenticationPrincipal AppUser user) {
+        return bolaoGrupoService.getById(id, user);
     }
 
     @GetMapping("/{id}/ranking")

@@ -8,6 +8,8 @@ import com.bolao.copa.auth.api.MfaVerifyRequest;
 import com.bolao.copa.auth.api.RefreshTokenRequest;
 import com.bolao.copa.auth.api.RegisterRequest;
 import com.bolao.copa.auth.config.MfaProperties;
+import com.bolao.copa.auth.passwordreset.PasswordResetToken;
+import com.bolao.copa.auth.passwordreset.PasswordResetTokenRepository;
 import com.bolao.copa.auth.security.JwtService;
 import com.bolao.copa.auth.token.RefreshToken;
 import com.bolao.copa.auth.token.RefreshTokenService;
@@ -16,8 +18,18 @@ import com.bolao.copa.auth.user.AppUser;
 import com.bolao.copa.auth.user.AppUserRepository;
 import com.warrenstrange.googleauth.GoogleAuthenticator;
 import com.warrenstrange.googleauth.GoogleAuthenticatorKey;
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.security.SecureRandom;
 import java.time.Instant;
+import java.time.temporal.ChronoUnit;
+import java.util.Base64;
+import java.util.HexFormat;
 import java.util.UUID;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -31,6 +43,8 @@ public class AuthService {
 
     private static final String DEFAULT_ROLE = "ROLE_USER";
 
+    private static final Logger log = LoggerFactory.getLogger(AuthService.class);
+
     private final AppUserRepository appUserRepository;
     private final PasswordEncoder passwordEncoder;
     private final AuthenticationManager authenticationManager;
@@ -38,6 +52,8 @@ public class AuthService {
     private final RefreshTokenService refreshTokenService;
     private final GoogleAuthenticator googleAuthenticator;
     private final MfaProperties mfaProperties;
+    private final PasswordResetTokenRepository passwordResetTokenRepository;
+    private final String appPublicUrl;
 
     public AuthService(
             AppUserRepository appUserRepository,
@@ -45,7 +61,9 @@ public class AuthService {
             AuthenticationManager authenticationManager,
             JwtService jwtService,
             RefreshTokenService refreshTokenService,
-            MfaProperties mfaProperties) {
+            MfaProperties mfaProperties,
+            PasswordResetTokenRepository passwordResetTokenRepository,
+            @Value("${app.public-url:http://localhost:5555}") String appPublicUrl) {
         this.appUserRepository = appUserRepository;
         this.passwordEncoder = passwordEncoder;
         this.authenticationManager = authenticationManager;
@@ -53,6 +71,8 @@ public class AuthService {
         this.refreshTokenService = refreshTokenService;
         this.googleAuthenticator = new GoogleAuthenticator();
         this.mfaProperties = mfaProperties;
+        this.passwordResetTokenRepository = passwordResetTokenRepository;
+        this.appPublicUrl = appPublicUrl.replaceAll("/+$", "");
     }
 
     @Transactional
@@ -197,6 +217,71 @@ public class AuthService {
         }
         user.setMfaEnabled(true);
         appUserRepository.save(user);
+    }
+
+    /**
+     * Sempre conclui com sucesso na resposta HTTP (não revela se o email existe). Gera token e regista o link
+     * nos logs do servidor para desenvolvimento; em produção configure envio de e-mail.
+     */
+    @Transactional
+    public void requestPasswordReset(String email) {
+        appUserRepository.findByEmail(email.strip()).ifPresent(user -> {
+            passwordResetTokenRepository.deleteByUserId(user.getId());
+            String raw = generateRawToken();
+            String hash = sha256Hex(raw);
+            PasswordResetToken entity =
+                    new PasswordResetToken(user, hash, Instant.now().plus(1, ChronoUnit.HOURS));
+            passwordResetTokenRepository.save(entity);
+            String link = appPublicUrl + "/redefinir-senha?token=" + java.net.URLEncoder.encode(raw, StandardCharsets.UTF_8);
+            log.info("Password reset link for {}: {}", user.getEmail(), link);
+        });
+    }
+
+    @Transactional
+    public void resetPassword(String token, String newPassword) {
+        String hash = sha256Hex(token);
+        PasswordResetToken pr = passwordResetTokenRepository
+                .findByTokenHashAndUsedAtIsNull(hash)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Token inválido ou já utilizado"));
+        if (pr.getExpiresAt().isBefore(Instant.now())) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Token expirado");
+        }
+        AppUser user = pr.getUser();
+        user.setPassword(passwordEncoder.encode(newPassword));
+        appUserRepository.save(user);
+        pr.setUsedAt(Instant.now());
+        passwordResetTokenRepository.save(pr);
+    }
+
+    private static String generateRawToken() {
+        byte[] b = new byte[32];
+        new SecureRandom().nextBytes(b);
+        return Base64.getUrlEncoder().withoutPadding().encodeToString(b);
+    }
+
+    private static String sha256Hex(String raw) {
+        try {
+            MessageDigest md = MessageDigest.getInstance("SHA-256");
+            return HexFormat.of().formatHex(md.digest(raw.getBytes(StandardCharsets.UTF_8)));
+        } catch (NoSuchAlgorithmException e) {
+            throw new IllegalStateException(e);
+        }
+    }
+
+    /**
+     * Login ou registo implícito via provedor OAuth2 (email verificado pelo provedor).
+     */
+    @Transactional
+    public AuthResponse issueOAuthSession(String email) {
+        String e = email.strip();
+        AppUser user = appUserRepository
+                .findByEmail(e)
+                .orElseGet(() -> {
+                    String randomPw = UUID.randomUUID().toString() + UUID.randomUUID();
+                    AppUser u = new AppUser(e, passwordEncoder.encode(randomPw), DEFAULT_ROLE);
+                    return appUserRepository.save(u);
+                });
+        return issueSessionTokens(user, null, null);
     }
 
     private AuthResponse issueSessionTokens(AppUser user, SessionContext context, String familyId) {

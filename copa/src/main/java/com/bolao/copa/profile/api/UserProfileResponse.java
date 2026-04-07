@@ -9,6 +9,7 @@ public record UserProfileResponse(
         Integer idade,
         String sexo,
         String telefone,
+        String avatarUrl,
         Instant createdAt,
         Instant updatedAt,
         String planTier,

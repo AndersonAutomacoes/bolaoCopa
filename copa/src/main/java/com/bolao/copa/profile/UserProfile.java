@@ -38,6 +38,9 @@ public class UserProfile {
     @Column(nullable = false, length = 30)
     private String telefone;
 
+    @Column(name = "avatar_url", length = 2048)
+    private String avatarUrl;
+
     @Column(name = "created_at", nullable = false)
     private Instant createdAt;
 
@@ -112,6 +115,14 @@ public class UserProfile {
 
     public void setTelefone(String telefone) {
         this.telefone = telefone;
+    }
+
+    public String getAvatarUrl() {
+        return avatarUrl;
+    }
+
+    public void setAvatarUrl(String avatarUrl) {
+        this.avatarUrl = avatarUrl;
     }
 
     public Instant getCreatedAt() {

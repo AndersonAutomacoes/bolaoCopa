@@ -1,6 +1,7 @@
 package com.bolao.copa.auth.config;
 
 import com.bolao.copa.auth.security.JwtAuthFilter;
+import com.bolao.copa.auth.security.OAuth2LoginSuccessHandler;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -28,23 +29,34 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 public class SecurityConfig {
 
     @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http, JwtAuthFilter jwtAuthFilter) throws Exception {
+    public SecurityFilterChain securityFilterChain(
+            HttpSecurity http, JwtAuthFilter jwtAuthFilter, OAuth2LoginSuccessHandler oauth2LoginSuccessHandler)
+            throws Exception {
         return http
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .csrf(csrf -> csrf.disable())
-                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED))
                 .authorizeHttpRequests(auth -> auth
                         // CORS preflight from browsers (e.g. Flutter web + JSON); sem isto OPTIONS retorna 403
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+                        .requestMatchers("/oauth2/**", "/login/oauth2/**")
+                        .permitAll()
                         .requestMatchers(
                                 "/api/v1/auth/register",
                                 "/api/v1/auth/login",
+                                "/api/v1/auth/forgot-password",
+                                "/api/v1/auth/reset-password",
                                 "/api/v1/auth/mfa/verify",
                                 "/api/v1/auth/refresh",
                                 "/api/v1/auth/logout")
                                 .permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/v1/boloes/public")
+                                .permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/v1/files/avatars/**")
+                                .permitAll()
                         .anyRequest().authenticated()
                 )
+                .oauth2Login(oauth2 -> oauth2.successHandler(oauth2LoginSuccessHandler))
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class)
                 .build();
     }

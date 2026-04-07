@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:http/http.dart' as http;
+import 'package:http_parser/http_parser.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../constants/api_constants.dart';
@@ -30,6 +31,34 @@ final class BolaoApi {
       'Accept': 'application/json',
       if (token != null && token.isNotEmpty) 'Authorization': 'Bearer $token',
     };
+  }
+
+  /// Sem `Content-Type`: uso em multipart (o cliente define o boundary).
+  static Future<Map<String, String>> _authHeadersNoContentType() async {
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString(SessionTokens.accessTokenKey);
+    return {
+      'Accept': 'application/json',
+      if (token != null && token.isNotEmpty) 'Authorization': 'Bearer $token',
+    };
+  }
+
+  static Future<void> forgotPassword(String email) async {
+    final r = await http.post(
+      _uri(ApiConstants.authForgotPasswordPath),
+      headers: const {'Content-Type': 'application/json', 'Accept': 'application/json'},
+      body: jsonEncode({'email': email.trim()}),
+    );
+    _throwIfError(r);
+  }
+
+  static Future<void> resetPassword({required String token, required String newPassword}) async {
+    final r = await http.post(
+      _uri(ApiConstants.authResetPasswordPath),
+      headers: const {'Content-Type': 'application/json', 'Accept': 'application/json'},
+      body: jsonEncode({'token': token, 'newPassword': newPassword}),
+    );
+    _throwIfError(r);
   }
 
   static void _throwIfError(http.Response r) {
@@ -91,8 +120,19 @@ final class BolaoApi {
     _throwIfError(r);
   }
 
-  static Future<List<RankingItemDto>> fetchRanking() async {
-    final r = await http.get(_uri(ApiConstants.rankingPath), headers: await _jsonHeaders());
+  /// [period]: `GLOBAL` (default), `WEEK`/`SEMANAL`, `MONTH`/`MENSAL` (servidor: fuso America/Sao_Paulo).
+  /// [nome]: filtro opcional por substring no nome ou email.
+  static Future<List<RankingItemDto>> fetchRanking({
+    String period = 'GLOBAL',
+    String? nome,
+  }) async {
+    final qp = <String, String>{'period': period};
+    final n = nome?.trim();
+    if (n != null && n.isNotEmpty) {
+      qp['nome'] = n;
+    }
+    final uri = _uri(ApiConstants.rankingPath).replace(queryParameters: qp);
+    final r = await http.get(uri, headers: await _jsonHeaders());
     _throwIfError(r);
     final list = jsonDecode(r.body) as List<dynamic>;
     return list.map((e) => RankingItemDto.fromJson(e as Map<String, dynamic>)).toList();
@@ -119,6 +159,51 @@ final class BolaoApi {
         'sexo': sexo,
         'telefone': telefone,
       }),
+    );
+    _throwIfError(r);
+    return UserProfileDto.fromJson(jsonDecode(r.body) as Map<String, dynamic>);
+  }
+
+  /// Extensões aceites pelo servidor para avatar.
+  static String? guessImageMimeFromFilename(String filename) {
+    final n = filename.toLowerCase().trim();
+    if (n.endsWith('.jpg') || n.endsWith('.jpeg')) return 'image/jpeg';
+    if (n.endsWith('.png')) return 'image/png';
+    if (n.endsWith('.gif')) return 'image/gif';
+    if (n.endsWith('.webp')) return 'image/webp';
+    return null;
+  }
+
+  /// Envia imagem do dispositivo (JPEG, PNG, GIF ou WebP; até 2 MB no servidor).
+  static Future<UserProfileDto> uploadProfileAvatar({
+    required List<int> fileBytes,
+    required String filename,
+  }) async {
+    final mime = guessImageMimeFromFilename(filename);
+    if (mime == null) {
+      throw ArgumentError('Use JPEG, PNG, GIF ou WebP.');
+    }
+    final uri = _uri('${ApiConstants.usersPath}/me/avatar');
+    final req = http.MultipartRequest('POST', uri);
+    req.headers.addAll(await _authHeadersNoContentType());
+    req.files.add(
+      http.MultipartFile.fromBytes(
+        'file',
+        fileBytes,
+        filename: filename,
+        contentType: MediaType.parse(mime),
+      ),
+    );
+    final streamed = await req.send();
+    final r = await http.Response.fromStream(streamed);
+    _throwIfError(r);
+    return UserProfileDto.fromJson(jsonDecode(r.body) as Map<String, dynamic>);
+  }
+
+  static Future<UserProfileDto> deleteProfileAvatar() async {
+    final r = await http.delete(
+      _uri('${ApiConstants.usersPath}/me/avatar'),
+      headers: await _authHeadersNoContentType(),
     );
     _throwIfError(r);
     return UserProfileDto.fromJson(jsonDecode(r.body) as Map<String, dynamic>);
@@ -231,6 +316,36 @@ final class BolaoApi {
     _throwIfError(r);
     final list = jsonDecode(r.body) as List<dynamic>;
     return list.map((e) => e as Map<String, dynamic>).toList();
+  }
+
+  static Future<List<Map<String, dynamic>>> fetchBoloesPublicos() async {
+    final r = await http.get(_uri('${ApiConstants.boloesPath}/public'), headers: await _jsonHeaders());
+    _throwIfError(r);
+    final list = jsonDecode(r.body) as List<dynamic>;
+    return list.map((e) => e as Map<String, dynamic>).toList();
+  }
+
+  static Future<Map<String, dynamic>> fetchBolaoById(int bolaoId) async {
+    final r = await http.get(_uri('${ApiConstants.boloesPath}/$bolaoId'), headers: await _jsonHeaders());
+    _throwIfError(r);
+    return jsonDecode(r.body) as Map<String, dynamic>;
+  }
+
+  static Future<Map<String, dynamic>> patchBolaoGrupo(
+    int bolaoId, {
+    bool? publico,
+    String? premiacaoTexto,
+  }) async {
+    final body = <String, dynamic>{};
+    if (publico != null) body['publico'] = publico;
+    if (premiacaoTexto != null) body['premiacaoTexto'] = premiacaoTexto;
+    final r = await http.patch(
+      _uri('${ApiConstants.boloesPath}/$bolaoId'),
+      headers: await _jsonHeaders(),
+      body: jsonEncode(body),
+    );
+    _throwIfError(r);
+    return jsonDecode(r.body) as Map<String, dynamic>;
   }
 
   static Future<List<RankingItemDto>> fetchBolaoRanking(int bolaoId) async {

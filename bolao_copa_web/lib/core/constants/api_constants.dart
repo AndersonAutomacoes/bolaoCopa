@@ -10,6 +10,8 @@ abstract final class ApiConstants {
   static const String authRegisterPath = '$apiV1/auth/register';
   static const String authLoginPath = '$apiV1/auth/login';
   static const String authLogoutPath = '$apiV1/auth/logout';
+  static const String authForgotPasswordPath = '$apiV1/auth/forgot-password';
+  static const String authResetPasswordPath = '$apiV1/auth/reset-password';
 
   static const String usersPath = '$apiV1/users';
   static const String jogosPath = '$apiV1/jogos';

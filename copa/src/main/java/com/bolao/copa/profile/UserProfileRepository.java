@@ -1,9 +1,13 @@
 package com.bolao.copa.profile;
 
+import java.util.Collection;
+import java.util.List;
 import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface UserProfileRepository extends JpaRepository<UserProfile, Long> {
 
     Optional<UserProfile> findByUserId(Long userId);
+
+    List<UserProfile> findByUserIdIn(Collection<Long> userIds);
 }

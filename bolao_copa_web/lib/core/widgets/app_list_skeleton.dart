@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../theme/app_layout.dart';
+
 /// Placeholder de lista (skeleton) alinhado a cards 16px da direção visual v1.
 ///
 /// Use no `waiting` de [FutureBuilder] para listas de cartões ou [ListTile].
@@ -7,14 +9,14 @@ class AppListSkeleton extends StatelessWidget {
   const AppListSkeleton({
     super.key,
     this.itemCount = 8,
-    this.padding = const EdgeInsets.all(16),
+    this.padding = AppLayout.pagePaddingAll,
   }) : _ranking = false;
 
   /// Variante para listas de ranking (posição + colunas).
   const AppListSkeleton.ranking({
     super.key,
     this.itemCount = 10,
-    this.padding = const EdgeInsets.all(16),
+    this.padding = AppLayout.pagePaddingAll,
   }) : _ranking = true;
 
   final int itemCount;

@@ -34,6 +34,12 @@ public class BolaoGrupo {
     @Column(name = "created_at", nullable = false)
     private Instant createdAt;
 
+    @Column(name = "publico", nullable = false)
+    private boolean publico = false;
+
+    @Column(name = "premiacao_texto", columnDefinition = "text")
+    private String premiacaoTexto;
+
     protected BolaoGrupo() {
     }
 
@@ -66,5 +72,21 @@ public class BolaoGrupo {
 
     public Instant getCreatedAt() {
         return createdAt;
+    }
+
+    public boolean isPublico() {
+        return publico;
+    }
+
+    public void setPublico(boolean publico) {
+        this.publico = publico;
+    }
+
+    public String getPremiacaoTexto() {
+        return premiacaoTexto;
+    }
+
+    public void setPremiacaoTexto(String premiacaoTexto) {
+        this.premiacaoTexto = premiacaoTexto;
     }
 }

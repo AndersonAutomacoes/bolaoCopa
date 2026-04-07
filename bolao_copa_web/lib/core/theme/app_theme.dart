@@ -9,10 +9,17 @@ abstract final class AppTheme {
   // --- Tokens (uso opcional em widgets) ---
   static const Color primary = Color(0xFF1B7F3A);
   static const Color secondaryGold = Color(0xFFC9A227);
-  static const Color surfacePage = Color(0xFFF1F5F9);
+  /// Fundo de página (mockup alta fidelidade — cinza muito claro).
+  static const Color surfacePage = Color(0xFFF4F7F9);
+
+  /// Barra lateral escura (desktop / mockup).
+  static const Color railBackground = Color(0xFF1E2D3E);
+  static const Color railOnBackground = Color(0xFFFFFFFF);
+  static const Color railMuted = Color(0xFF94A3B8);
   static const Color surfaceCard = Color(0xFFFFFFFF);
   static const Color textPrimary = Color(0xFF0F172A);
-  static const Color textSecondary = Color(0xFF64748B);
+  /// Contraste ≥ 4.5:1 sobre [surfacePage] (WCAG AA texto corrente).
+  static const Color textSecondary = Color(0xFF475569);
   static const Color outlineMuted = Color(0xFFE2E8F0);
 
   static const Color darkBackground = Color(0xFF0B1220);
@@ -124,7 +131,7 @@ abstract final class AppTheme {
         centerTitle: true,
         elevation: 0,
         scrolledUnderElevation: 0,
-        backgroundColor: scheme.surface,
+        backgroundColor: scaffoldBackground,
         foregroundColor: scheme.onSurface,
       ),
       cardTheme: cardTheme,

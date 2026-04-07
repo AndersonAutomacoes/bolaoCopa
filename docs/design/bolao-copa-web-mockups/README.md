@@ -39,9 +39,29 @@ git add .gitattributes
 
 Depois adicione os PNG normalmente. Quem clonar o repo precisa de `git lfs pull` (ou clone com LFS ativo) para obter os binários.
 
+## Verificar se os 24 PNG existem
+
+Na raiz do repositório (ou a partir desta pasta), execute:
+
+**Windows (PowerShell)**
+
+```powershell
+.\docs\design\bolao-copa-web-mockups\scripts\verify-mockup-pngs.ps1
+```
+
+**Git Bash / Linux / macOS**
+
+```bash
+bash docs/design/bolao-copa-web-mockups/scripts/verify-mockup-pngs.sh
+```
+
+- Saída **0:** todos os ficheiros listados em [`scripts/expected-png-manifest.txt`](scripts/expected-png-manifest.txt) existem em `reference/png/`.
+- Saída **1:** falta pelo menos um PNG (a lista aparece no terminal).
+- Saída **2:** manifest em falta ou não tem exatamente 24 linhas.
+
 ## Fluxo para a app ficar idêntica aos mockups
 
-1. Garantir que os 24 PNG estão em `reference/png/`.
+1. Garantir que os 24 PNG estão em `reference/png/` (use o script acima).
 2. Seguir [CHECKLIST_IMPLEMENTACAO_MOCKUPS.md](CHECKLIST_IMPLEMENTACAO_MOCKUPS.md) e marcar cada item ao comparar **screenshot da app** com o PNG ao mesmo viewport (ex.: 1440×900 claro).
 3. Ajustar primeiro `app_theme.dart` e widgets partilhados em `core/widgets/`, depois cada `*_screen.dart`.
 

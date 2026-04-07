@@ -112,6 +112,6 @@
 
 ## Critério de conclusão
 
-- [ ] Os 24 PNG estão em `reference/png/` com nomes corretos.
+- [X] Os 24 PNG estão em `reference/png/` com nomes corretos.
 - [ ] Todas as linhas desta checklist estão marcadas para claro **e**, onde aplicável, validadas em dark com `mockup_dark_*`.
 - [ ] Não há cores hex soltas fora de `AppTheme` / `Theme.of(context).colorScheme` (exceto acentos pontuais já documentados na direção visual).

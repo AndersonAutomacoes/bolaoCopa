@@ -2,8 +2,11 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../features/auth/presentation/forgot_password_screen.dart';
 import '../../features/auth/presentation/login_screen.dart';
+import '../../features/auth/presentation/oauth_bridge_screen.dart';
 import '../../features/auth/presentation/register_screen.dart';
+import '../../features/auth/presentation/reset_password_screen.dart';
 import '../../features/home/presentation/home_screen.dart';
 import '../../features/jogos/presentation/jogo_detail_screen.dart';
 import '../../features/jogos/presentation/jogos_list_screen.dart';
@@ -15,6 +18,9 @@ import '../../features/splash/presentation/splash_screen.dart';
 import '../../features/admin/presentation/admin_dashboard_screen.dart';
 import '../../features/admin/presentation/admin_jogos_screen.dart';
 import '../../features/admin/presentation/admin_selecoes_screen.dart';
+import '../../features/admin/presentation/admin_settings_screen.dart';
+import '../../features/help/presentation/ajuda_screen.dart';
+import '../../features/notifications/presentation/in_app_notifications_screen.dart';
 import '../../features/bolao_grupo/presentation/bolao_grupos_screen.dart';
 import '../../features/premiacao/presentation/premiacao_screen.dart';
 import '../../features/regras/presentation/regras_screen.dart';
@@ -47,8 +53,8 @@ Widget _shellIndexedStackWithExpandedBranches(
 
 /// Fluxo principal da webapp:
 ///
-/// 1. [SplashScreen] — verifica sessão (token).
-/// 2. Não autenticado → [LoginScreen] ou [RegisterScreen].
+/// 1. [SplashScreen] — bootstrap da sessão; landing pública com CTAs (login/registo).
+/// 2. Não autenticado → [LoginScreen] ou [RegisterScreen] a partir da splash ou URL direta.
 /// 3. Autenticado → shell com abas: Início, Jogos, Ranking, Perfil.
 /// 4. [JogosListScreen] → [JogoDetailScreen] (ver jogo + registrar/editar palpite).
 /// 5. [MeuPalpiteScreen] — lista consolidada dos palpites do usuário (atalho na home e na app bar).
@@ -74,16 +80,31 @@ abstract final class AppRouter {
         return AppRoutes.splash;
       }
       if (!auth.initialized) {
-        return loc == AppRoutes.splash ? null : AppRoutes.splash;
+        if (loc == AppRoutes.splash ||
+            loc == AppRoutes.oauthBridge ||
+            loc == AppRoutes.recuperarSenha ||
+            loc == AppRoutes.redefinirSenha) {
+          return null;
+        }
+        return AppRoutes.splash;
       }
       if (loc == AppRoutes.splash) {
-        return auth.isLoggedIn ? AppRoutes.inicio : AppRoutes.login;
+        return auth.isLoggedIn ? AppRoutes.inicio : null;
       }
-      final loggingIn = loc == AppRoutes.login || loc == AppRoutes.register;
-      if (!auth.isLoggedIn && !loggingIn) {
+      final publicAuthRoute = loc == AppRoutes.login ||
+          loc == AppRoutes.register ||
+          loc == AppRoutes.splash ||
+          loc == AppRoutes.recuperarSenha ||
+          loc == AppRoutes.redefinirSenha ||
+          loc == AppRoutes.oauthBridge;
+      if (!auth.isLoggedIn && !publicAuthRoute) {
         return AppRoutes.login;
       }
-      if (auth.isLoggedIn && loggingIn) {
+      final isAuthShellRoute = loc == AppRoutes.login ||
+          loc == AppRoutes.register ||
+          loc == AppRoutes.recuperarSenha ||
+          loc == AppRoutes.redefinirSenha;
+      if (auth.isLoggedIn && isAuthShellRoute) {
         return AppRoutes.inicio;
       }
       if (auth.isLoggedIn) {
@@ -116,6 +137,24 @@ abstract final class AppRouter {
         path: AppRoutes.register,
         name: AppRoutes.registerName,
         builder: (context, state) => const RegisterScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.recuperarSenha,
+        name: AppRoutes.recuperarSenhaName,
+        builder: (context, state) => const ForgotPasswordScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.redefinirSenha,
+        name: AppRoutes.redefinirSenhaName,
+        builder: (context, state) {
+          final token = state.uri.queryParameters['token'] ?? '';
+          return ResetPasswordScreen(token: token);
+        },
+      ),
+      GoRoute(
+        path: AppRoutes.oauthBridge,
+        name: AppRoutes.oauthBridgeName,
+        builder: (context, state) => OAuthBridgeScreen(uri: state.uri),
       ),
       StatefulShellRoute(
         builder: (context, state, navigationShell) {
@@ -186,6 +225,16 @@ abstract final class AppRouter {
         builder: (context, state) => const RegrasScreen(),
       ),
       GoRoute(
+        path: AppRoutes.ajuda,
+        name: AppRoutes.ajudaName,
+        builder: (context, state) => const AjudaScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.notificacoes,
+        name: AppRoutes.notificacoesName,
+        builder: (context, state) => const InAppNotificationsScreen(),
+      ),
+      GoRoute(
         path: AppRoutes.admin,
         name: AppRoutes.adminName,
         builder: (context, state) => const AdminDashboardScreen(),
@@ -199,6 +248,11 @@ abstract final class AppRouter {
             path: 'jogos',
             name: AppRoutes.adminJogosName,
             builder: (context, state) => const AdminJogosScreen(),
+          ),
+          GoRoute(
+            path: 'configuracoes',
+            name: AppRoutes.adminConfiguracoesName,
+            builder: (context, state) => const AdminSettingsScreen(),
           ),
         ],
       ),
@@ -234,6 +288,12 @@ abstract final class AppRoutes {
   static const loginName = 'login';
   static const register = '/register';
   static const registerName = 'register';
+  static const recuperarSenha = '/recuperar-senha';
+  static const recuperarSenhaName = 'recuperarSenha';
+  static const redefinirSenha = '/redefinir-senha';
+  static const redefinirSenhaName = 'redefinirSenha';
+  static const oauthBridge = '/oauth-bridge';
+  static const oauthBridgeName = 'oauthBridge';
   static const inicio = '/inicio';
   static const inicioName = 'inicio';
   static const jogos = '/jogos';
@@ -258,4 +318,10 @@ abstract final class AppRoutes {
   static const premiacoesName = 'premiacoes';
   static const regras = '/regras';
   static const regrasName = 'regras';
+  static const ajuda = '/ajuda';
+  static const ajudaName = 'ajuda';
+  static const notificacoes = '/notificacoes';
+  static const notificacoesName = 'notificacoes';
+  static const adminConfiguracoes = '/admin/configuracoes';
+  static const adminConfiguracoesName = 'adminConfiguracoes';
 }

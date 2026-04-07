@@ -9,6 +9,7 @@ public record RankingItemResponse(
         String nome,
         Integer totalPontos,
         Integer totalAcertosExatos,
-        Instant primeiroPalpiteEm
+        Instant primeiroPalpiteEm,
+        String avatarUrl
 ) {
 }
